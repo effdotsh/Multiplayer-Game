@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<title>Hello World</title>
+<body>
+Hello World
+<div class="num"></div>
+<script>
+    const dom = document.querySelector('.num')
+    let ws = new WebSocket('wss://aispawn.herokuapp.com/ws')
+    const outputNumber = ({data}) =>
+    {
+        const {number} = JSON.parse(data)
+        let template = `
+    <h1>Number of reloads and open tabs: ${number}</h1>
+    `;
+        dom.innerHTML = template
+    }
+
+
+
+    ws.addEventListener('message', outputNumber)
+</script>
+</body>
+</html>
