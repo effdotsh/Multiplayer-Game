@@ -5,24 +5,35 @@ import {
 import { v4 } from "https://deno.land/std@0.83.0/uuid/mod.ts";
 
 let sockets = new Map<string, WebSocket>();
-let mssg = { number: 0 };
+let mssg = { presses: 0, connections: 1 };
 let press_count: number = 0;
+
 const wsManager = async (ws: WebSocket) => {
   const uid = v4.generate();
 
   if (!sockets.has(uid)) {
-    ws.send(JSON.stringify({ number: press_count }));
+    sockets.set(uid, ws);
+
+    mssg = {
+      presses: press_count,
+      connections: sockets.size,
+    };
+    sockets.forEach((ws: WebSocket) => {
+      ws.send(JSON.stringify(mssg));
+    });
   }
-  sockets.set(uid, ws);
 
   for await (const ev of ws) {
     if (typeof ev === "string") {
-      console.log(press_count);
-      if (ev === "Increase") {
+      if (ev === "up") {
         press_count++;
+      } else if (ev === "down") {
+        press_count--;
       }
+
       mssg = {
-        number: press_count,
+        presses: press_count,
+        connections: sockets.size,
       };
       sockets.forEach((ws: WebSocket) => {
         ws.send(JSON.stringify(mssg));

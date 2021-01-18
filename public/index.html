@@ -6,29 +6,45 @@
 </head>
 
 <body>
-<div class="num"><h1>Loading...</h1></div>
-<button id="increase">Increase</button>
+<div class="data"><h1>Loading...</h1></div>
 
+<button id="increase">Increase</button>
+<button id="decrease">Decrease</button>
+
+<script src="libraries/p5.min.js"></script>
 <script>
-    const dom = document.querySelector('.num')
+    const pressed = document.querySelector('.data')
+    const connections = document.querySelector('.connections')
+
     const inc = document.getElementById('increase')
+    const dec = document.getElementById('decrease')
+
     let ws = new WebSocket('wss://aispawn.herokuapp.com/ws')
     // let ws = new WebSocket('ws://localhost:3000/ws')
 
     //update websocket
-    const recieveNumber = ({data}) => {
-        console.log(data)
-        const {number} = JSON.parse(data)
-        let template = `<h1>Num Presses: ${number}</h1>`;
-        dom.innerHTML = template
+    const updateData = ({data}) => {
+        const {presses} = JSON.parse(data)
+        const {connections} = JSON.parse(data)
+
+        let template = `
+            <h1>Num Presses: ${presses}</h1>
+            <h1>Current Connections: ${connections}</h1>
+               `;
+
+        pressed.innerHTML = template
     }
-    ws.addEventListener('message', recieveNumber)
+    ws.addEventListener('message', updateData)
 
     //tell server
-    const sendNum = () => {
-        ws.send('Increase')
+    const up = () => {
+        ws.send('up')
     }
-    inc.addEventListener('click', sendNum)
+    const down = () => {
+        ws.send('down')
+    }
+    inc.addEventListener('click', up)
+    dec.addEventListener('click', down)
 </script>
 </body>
 </html>
