@@ -15,14 +15,16 @@ const PORT: number = +Deno.env.get("PORT") || 8080;
 
 const decoder = new TextDecoder("utf-8");
 const server = serve({ port: PORT });
-
+console.log(`http://localhost:${PORT}`);
 for await (const req of server) {
   //send user html form
   if (req.url === "/") {
-    req.respond({
-      status: 200,
-      body: await Deno.open("./public/index.html"),
-    });
+    try {
+      req.respond({
+        status: 200,
+        body: await Deno.open("./public/index.html"),
+      });
+    } catch {}
   }
 
   //Establish websocket request

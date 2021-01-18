@@ -3,10 +3,12 @@
 <title>Hello World</title>
 <body>
 Hello World
-<div class="num"></div>
+<div class="num"><h1>Loading...</h1></div>
 <script>
     const dom = document.querySelector('.num')
     let ws = new WebSocket('wss://aispawn.herokuapp.com/ws')
+    // let ws = new WebSocket('ws://localhost:3000/ws')
+
     const outputNumber = ({data}) =>
     {
         const {number} = JSON.parse(data)
