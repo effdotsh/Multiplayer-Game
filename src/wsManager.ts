@@ -6,11 +6,12 @@ import { v4 } from "https://deno.land/std@0.83.0/uuid/mod.ts";
 //todo interface
 class Signal {
   players = new Array();
+  you_are: number = 0;
 }
 
 class Player {
-  x = 0;
-  y = 0;
+  x: number = 0;
+  y: number = 0;
 }
 
 let speed = 5;
@@ -61,9 +62,12 @@ const wsManager = async (ws: WebSocket) => {
     }
 
     mssg.players = updateMssg();
+    let player_counter = 0;
     sockets.forEach((user) => {
       let socket = user.socket;
       try {
+        mssg.you_are = player_counter;
+        player_counter += 1;
         socket.send(JSON.stringify(mssg));
       } catch {}
     });
