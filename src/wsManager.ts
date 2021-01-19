@@ -13,10 +13,11 @@ class Player {
   y = 0;
 }
 
+let speed = 5;
+
 let mssg = new Signal();
 
 let sockets = new Map<string, { socket: WebSocket; player: Player }>();
-let press_count: number = 0;
 
 function updateMssg() {
   let players: Player[] = [];
@@ -30,10 +31,30 @@ const wsManager = async (ws: WebSocket) => {
   const uid = v4.generate();
   if (!sockets.has(uid)) {
     sockets.set(uid, { socket: ws, player: new Player() });
-    console.log(mssg.players.length);
   }
   for await (const ev of ws) {
-    console.log("reeee");
+    if (typeof ev === "string") {
+      if (ev.includes("pos")) { //Handle player movement
+        // Scale player movement to fit speed
+        let velocity = ev.split("pos")[1].split(",");
+        let opX = Math.abs(+velocity[0]);
+        let opY = Math.abs(+velocity[1]);
+        let scaler = 1;
+        if (opX + opY != 0) {
+          scaler = (speed / (opX + opY));
+        }
+        let velX = +velocity[0] * scaler;
+        let velY = +velocity[1] * scaler;
+
+        //move player
+        // @ts-ignore
+        let player = sockets.get(uid).player;
+        player.x += velX;
+        player.y += velY;
+        sockets.set(uid, { socket: ws, player: player });
+      }
+    }
+
     //delete socket if connection closed
     if (isWebSocketCloseEvent(ev)) {
       sockets.delete(uid);
@@ -42,7 +63,9 @@ const wsManager = async (ws: WebSocket) => {
     mssg.players = updateMssg();
     sockets.forEach((user) => {
       let socket = user.socket;
-      socket.send(JSON.stringify(mssg));
+      try {
+        socket.send(JSON.stringify(mssg));
+      } catch {}
     });
   }
 };

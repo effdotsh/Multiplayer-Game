@@ -36,6 +36,7 @@ for await (const req of server) {
       if (req.url === "/") {
         req.url = "/index.html";
       }
+      console.log(`./public${req.url}`);
       req.respond({
         status: 200,
         body: await Deno.open(`./public${req.url}`),
