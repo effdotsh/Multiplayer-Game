@@ -11,18 +11,42 @@
 </head>
 
 <body>
-<div class="data"><h1>Loading...</h1></div>
-
-<button id="increase">Increase</button>
-<button id="decrease">Decrease</button>
-
+<h1>Multiplayer Test</h1>
+<div class="connections"><p>Loading...</p></div>
 
 
 <script>
+        let ws = new WebSocket('wss://aispawn.herokuapp.com/ws')
+        // let ws = new WebSocket('ws://localhost:3000/ws')
+
+
+        const connectionDisplay = document.querySelector('.connections')
+
+
+        //update websocket
+        const updateData = ({data}) => {
+            const {players} = JSON.parse(data)
+            console.log(data)
+
+            let template = `
+            <p>Connections: ${players.length}</p>`;
+            connectionDisplay.innerHTML = template
+        }
+
+        //tell server
+        const up = () => {
+            ws.send('up')
+        }
+        const down = () => {
+            ws.send('down')
+        }
 
 </script>
 
+<script src="player.js"></script>
 <script src="libraries/p5.min.js"></script>
 <script src="game.js"></script>
+
+
 </body>
 </html>

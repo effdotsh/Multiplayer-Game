@@ -18,31 +18,38 @@ import "https://deno.land/x/dotenv/load.ts";
 //Get port from env vars
 // @ts-ignore
 const PORT: number = +Deno.env.get("PORT") || 8080;
-
+console.log("hola");
 const server = serve({ port: PORT });
 console.log(`http://localhost:${PORT}`);
 for await (const req of server) {
-  if (req.url === "/ws") {
-    if (acceptable(req)) {
-      acceptWebSocket({
-        conn: req.conn,
-        bufReader: req.r,
-        bufWriter: req.w,
-        headers: req.headers,
-      }).then(wsManager);
+  try {
+    if (req.url === "/ws") {
+      if (acceptable(req)) {
+        acceptWebSocket({
+          conn: req.conn,
+          bufReader: req.r,
+          bufWriter: req.w,
+          headers: req.headers,
+        }).then(wsManager);
+      }
+    } else if (!req.url.includes("..")) { //send all non-websocket requests to the public folder
+      if (req.url === "/") {
+        req.url = "/index.html";
+      }
+      req.respond({
+        status: 200,
+        body: await Deno.open(`./public${req.url}`),
+      });
+    } else {
+      req.respond({
+        status: 401,
+        body: "Forbidden",
+      });
     }
-  } else if (!req.url.includes("..")) { //send all non-websocket requests to the public folder
-    if (req.url === "/") {
-      req.url = "/index.html";
-    }
+  } catch {
     req.respond({
-      status: 200,
-      body: await Deno.open(`./public${req.url}`),
-    });
-  } else {
-    req.respond({
-      status: 401,
-      body: "Forbidden",
+      status: 500,
+      body: "Oops",
     });
   }
 }

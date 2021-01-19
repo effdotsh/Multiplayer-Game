@@ -1,42 +1,22 @@
-let ws = new WebSocket('wss://aispawn.herokuapp.com/ws')
-// let ws = new WebSocket('ws://localhost:3000/ws')
-
-const pressed = document.querySelector('.data')
-const connections = document.querySelector('.connections')
-
-const inc = document.getElementById('increase')
-const dec = document.getElementById('decrease')
-
-
-
-//update websocket
-const updateData = ({data}) => {
-    const {presses} = JSON.parse(data)
-    const {connections} = JSON.parse(data)
-
-    let template = `
-            <h1>Num Presses: ${presses}</h1>
-            <h1>Current Connections: ${connections}</h1>
-               `;
-
-    pressed.innerHTML = template
-}
-
-//tell server
-const up = () => {
-    ws.send('up')
-}
-const down = () => {
-    ws.send('down')
-}
-
+let speed = 1
+var players_list = []
 
 function setup() {
-    ws.addEventListener('message', updateData)
-    inc.addEventListener('click', up)
-    dec.addEventListener('click', down)
+    createCanvas(1000, 1000)
+    background(0)
+    ws.addEventListener('message', ({data}) => {
+        const {players} = JSON.parse(data)
+
+        let template = `
+            <p>Connections: ${players.length}</p>`;
+        connectionDisplay.innerHTML = template
+        players_list = players
+    })
+    ws.send('ping')
 
 }
-function draw(){
 
+function draw() {
+    console.log(players_list)
+    frameRate(1)
 }
