@@ -4,9 +4,9 @@ var socket_ready = false;
 
 let vertical_vel = 0
 let horizontal_vel = 0
-// let ws = new WebSocket('ws://localhost:3000/ws')
 
 let ws = new WebSocket('wss://aispawn.herokuapp.com/ws')
+// let ws = new WebSocket('ws://localhost:3000/ws')
 
 function setup() {
     fill(255)
@@ -44,7 +44,7 @@ function draw() {
             player_counter++
             circle(p.x, p.y, 50, 50)
         }
-        ws.send(`pos${horizontal_vel},${vertical_vel}`)
+        ws.send(`pos${horizontal_vel*100},${vertical_vel*100}`)
     }
 }
 
