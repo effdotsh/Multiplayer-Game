@@ -31,7 +31,7 @@ function setup() {
             <p>Connections: ${players.length}</p>`;
             connectionDisplay.innerHTML = template
         }
-        if(type === 'bullets' || all){
+        if (type === 'bullets' || all) {
             const {bullets} = parsed
             bullets_list = bullets
         }
@@ -56,14 +56,15 @@ function draw() {
             }
             player_counter++
             circle(p.x, p.y, 50, 50)
+
         }
 
         //iterate spawning bullets
-        for (b of bullets_list){
+        for (b of bullets_list) {
             fill(0, 200, 0)
             circle(b.x, b.y, 25, 25)
         }
-        ws.send(`pos${horizontal_vel*100},${vertical_vel*100}`)
+        ws.send(`pos${horizontal_vel * 100},${vertical_vel * 100}`)
     }
 }
 
@@ -97,6 +98,6 @@ function keyReleased() {
     }
 }
 
-function mousePressed(){
+function mousePressed() {
     ws.send(`fire${int(mouseX)}, ${int(mouseY)}`)
 }
