@@ -100,6 +100,17 @@ const wsManager = async (ws: WebSocket) => {
           let player = sockets.get(uid).player;
           player.x += velocity[0];
           player.y += velocity[1];
+          player.x = player.x > 1000
+            ? player.x = 1000
+            : player.x < 0
+            ? player.x = 0
+            : player.x = player.x;
+
+          player.y = player.y > 1000
+            ? player.y = 1000
+            : player.y < 0
+            ? player.y = 0
+            : player.y = player.y;
           sockets.set(uid, { socket: ws, player: player });
 
           //tell players about the movement
