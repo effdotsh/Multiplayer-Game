@@ -58,7 +58,7 @@ function calcAngleDegrees(x: number, y: number) {
 
 function updateMssg() {
   let players: Player[] = [];
-  sockets.forEach((connection) => {
+  sockets.forEach((connection: { socket: WebSocket; player: Player }) => {
     players.push(connection.player);
   });
   return players;
@@ -133,11 +133,9 @@ const wsManager = async (ws: WebSocket) => {
             bullet_speed,
           );
           mssg.bullets.push(bullet);
-          console.log(mssg.bullets);
         } else if (ev.includes("wake")) {
           mssg.type = "all";
           ws.send(JSON.stringify(mssg));
-          console.log("wake");
         }
 
         //move bullets and despawn old ones
