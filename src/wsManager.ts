@@ -16,6 +16,7 @@ class Bullet {
   slope: number = 0;
 }
 class Signal {
+  type: string = "all";
   players: Player[] = new Array();
   bullets: Bullet[] = new Array();
   you_are: number = 0;
@@ -51,6 +52,15 @@ function updateMssg() {
   });
   return players;
 }
+function tellPlayers(mesage: Signal) {
+  let player_counter = 0;
+  sockets.forEach((user) => {
+    let socket = user.socket;
+    mesage.you_are = player_counter;
+    player_counter += 1;
+    socket.send(JSON.stringify(mesage));
+  });
+}
 
 const wsManager = async (ws: WebSocket) => {
   const uid = v4.generate();
@@ -62,40 +72,55 @@ const wsManager = async (ws: WebSocket) => {
     sockets.set(uid, { socket: ws, player: newPlayer });
   }
   for await (const ev of ws) {
-    if (typeof ev === "string") {
-      if (ev.includes("pos")) { //Handle player movement
-        // Scale player movement to fit speed
-        let velocity_input: string[] = ev.split("pos")[1].split(",");
-        let velocity: number[] = bindVector(
-          +velocity_input[0],
-          +velocity_input[1],
-          speed,
-        );
+    try {
+      if (typeof ev === "string") {
+        if (ev.includes("pos")) { //Handle player movement
+          // Scale player movement to fit spee
+          let velocity_input: string[] = ev.split("pos")[1].split(",");
+          let velocity: number[] = bindVector(
+            +velocity_input[0],
+            +velocity_input[1],
+            speed,
+          );
 
-        //move player
-        // @ts-ignore
-        let player = sockets.get(uid).player;
-        player.x += velocity[0];
-        player.y += velocity[1];
-        sockets.set(uid, { socket: ws, player: player });
+          //move player
+          // @ts-ignore
+          let player = sockets.get(uid).player;
+          player.x += velocity[0];
+          player.y += velocity[1];
+          sockets.set(uid, { socket: ws, player: player });
+
+          //tell players about the movement
+          mssg.players = updateMssg();
+          let small_mssg = new Signal();
+          small_mssg.players = mssg.players;
+          small_mssg.type = "players";
+          tellPlayers(small_mssg);
+        } else if (ev.includes("fire")) {
+          let locs_str: string[] = ev.split("fire")[1].split(", ");
+          let locs: number[] = [+locs_str[0], +locs_str[1]];
+          let bullet: Bullet = new Bullet();
+          bullet.x = locs[0];
+          bullet.y = locs[1];
+          mssg.bullets.push(bullet);
+
+          //tell players bullets
+          let small_mssg = new Signal();
+          small_mssg.type = "bullets";
+          small_mssg.bullets = mssg.bullets;
+          tellPlayers(small_mssg);
+        } else if (ev.includes("wake")) {
+          mssg.type = "all";
+          ws.send(JSON.stringify(mssg));
+          console.log("wake");
+        }
       }
-    }
 
-    //delete socket if connection closed
-    if (isWebSocketCloseEvent(ev)) {
-      sockets.delete(uid);
-    }
-
-    mssg.players = updateMssg();
-    let player_counter = 0;
-    sockets.forEach((user) => {
-      let socket = user.socket;
-      try {
-        mssg.you_are = player_counter;
-        player_counter += 1;
-        socket.send(JSON.stringify(mssg));
-      } catch {}
-    });
+      //delete socket if connection closed
+      if (isWebSocketCloseEvent(ev)) {
+        sockets.delete(uid);
+      }
+    } catch {}
   }
 };
 
