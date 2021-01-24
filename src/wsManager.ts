@@ -9,6 +9,7 @@ import { v4 } from "https://deno.land/std@0.83.0/uuid/mod.ts";
 class Player {
   x: number = 0;
   y: number = 0;
+  updateTime: number = Date.now();
 }
 
 class Bullet {
@@ -50,10 +51,6 @@ function bindVector(x: number, y: number, magnitude: number = 1): number[] {
   }
 
   return [x, y];
-}
-
-function calcAngleDegrees(x: number, y: number) {
-  return Math.atan2(y, x) * 180 / Math.PI;
 }
 
 function updateMssg() {
@@ -98,6 +95,10 @@ const wsManager = async (ws: WebSocket) => {
           //move player
           // @ts-ignore
           let player = sockets.get(uid).player;
+          let time_multiplier = (Date.now() - player.updateTime) / 20;
+          player.updateTime = Date.now();
+          velocity[0] *= time_multiplier;
+          velocity[1] *= time_multiplier;
           player.x += velocity[0];
           player.y += velocity[1];
           player.x = player.x > 1000
@@ -111,6 +112,7 @@ const wsManager = async (ws: WebSocket) => {
             : player.y < 0
             ? player.y = 0
             : player.y = player.y;
+
           sockets.set(uid, { socket: ws, player: player });
 
           //tell players about the movement
