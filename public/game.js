@@ -6,8 +6,6 @@ var socket_ready = false;
 let vertical_vel = 0
 let horizontal_vel = 0
 
-let ws = new WebSocket('wss://nononojai.herokuapp.com/ws')
-// let ws = new WebSocket('ws://localhost:3000/ws')
 
 function setup() {
     fill(255)
