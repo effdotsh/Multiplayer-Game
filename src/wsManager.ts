@@ -148,8 +148,11 @@ const wsManager = async (ws: WebSocket) => {
               mssg.bullets.pop();
             }
           } else {
-            bullet.x += bullet.angle[0];
-            bullet.y += bullet.angle[1];
+            bullet.x += bullet.angle[0] *
+              ((Date.now() - bullet.update_time) / 20);
+            bullet.y += bullet.angle[1] *
+              ((Date.now() - bullet.update_time) / 20);
+            bullet.update_time = Date.now();
           }
           bullet_counter += 1;
         }
