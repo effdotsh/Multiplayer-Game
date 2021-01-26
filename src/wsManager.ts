@@ -87,106 +87,103 @@ const wsManager = async (ws: WebSocket) => {
     sockets.set(uid, { socket: ws, player: newPlayer });
   }
   for await (const ev of ws) {
-    try {
-      if (typeof ev === "string") {
-        if (ev.includes("pos")) { //Handle player movement
-          // Scale player movement to fit spee
-          let velocity_input: string[] = ev.split("pos")[1].split(",");
-          let velocity: number[] = bindVector(
-            +velocity_input[0],
-            +velocity_input[1],
-            movement_speed,
-          );
+    if (typeof ev === "string") {
+      if (ev.includes("pos")) { //Handle player movement
+        // Scale player movement to fit spee
+        let velocity_input: string[] = ev.split("pos")[1].split(",");
+        let velocity: number[] = bindVector(
+          +velocity_input[0],
+          +velocity_input[1],
+          movement_speed,
+        );
 
-          //move player
-          // @ts-ignore
-          let player = sockets.get(uid).player;
-          let time_multiplier = (Date.now() - player.updateTime) / 20;
-          player.updateTime = Date.now();
-          velocity[0] *= time_multiplier;
-          velocity[1] *= time_multiplier;
-          player.x += velocity[0];
-          player.y += velocity[1];
-          player.x = player.x > 1000
-            ? player.x = 1000
-            : player.x < 0
-            ? player.x = 0
-            : player.x = player.x;
+        //move player
+        // @ts-ignore
+        let player = sockets.get(uid).player;
+        let time_multiplier = (Date.now() - player.updateTime) / 20;
+        player.updateTime = Date.now();
+        velocity[0] *= time_multiplier;
+        velocity[1] *= time_multiplier;
+        player.x += velocity[0];
+        player.y += velocity[1];
+        player.x = player.x > 1000
+          ? player.x = 1000
+          : player.x < 0
+          ? player.x = 0
+          : player.x = player.x;
 
-          player.y = player.y > 1000
-            ? player.y = 1000
-            : player.y < 0
-            ? player.y = 0
-            : player.y = player.y;
+        player.y = player.y > 1000
+          ? player.y = 1000
+          : player.y < 0
+          ? player.y = 0
+          : player.y = player.y;
 
-          sockets.set(uid, { socket: ws, player: player });
+        sockets.set(uid, { socket: ws, player: player });
 
-          //tell players about the movement
-          mssg.players = updateMssg();
-          let small_mssg = new Signal();
-          small_mssg.info = mssg.players;
-          small_mssg.type = "players";
-          tellPlayers(small_mssg);
-        } else if (ev.includes("fire")) {
-          let locs_str: string[] = ev.split("fire")[1].split(", ");
-          let locs: number[] = [+locs_str[0], +locs_str[1]];
-          let bullet: Bullet = new Bullet();
-          // @ts-ignore
-          let player = sockets.get(uid).player;
-          bullet.x = player.x;
-          bullet.y = player.y;
-          bullet.angle = bindVector(
-            locs[0] - bullet.x,
-            locs[1] - bullet.y,
-            bullet_speed,
-          );
-          mssg.bullets.push(bullet);
+        //tell players about the movement
+        mssg.players = updateMssg();
+        let small_mssg = new Signal();
+        small_mssg.info = mssg.players;
+        small_mssg.type = "players";
+        tellPlayers(small_mssg);
+      } else if (ev.includes("fire")) {
+        let locs_str: string[] = ev.split("fire")[1].split(", ");
+        let locs: number[] = [+locs_str[0], +locs_str[1]];
+        let bullet: Bullet = new Bullet();
+        // @ts-ignore
+        let player = sockets.get(uid).player;
+        bullet.x = player.x;
+        bullet.y = player.y;
+        bullet.angle = bindVector(
+          locs[0] - bullet.x,
+          locs[1] - bullet.y,
+          bullet_speed,
+        );
+        mssg.bullets.push(bullet);
 
-          let bullet_mssg = new Signal;
-          bullet_mssg.type = 'bullets'
-          bullet_mssg.info = [bullet]
-          tellPlayers(bullet_mssg)
-        } else if (ev.includes("wake")) {
-          let dummy_mssg = new Signal
-          dummy_mssg.type = "players";
-          dummy_mssg.info.push(mssg.players)
-          ws.send(JSON.stringify(dummy_mssg));
-          dummy_mssg.type = 'bullets'
-          dummy_mssg.info.push(mssg.bullets)
-          ws.send(JSON.stringify(mssg));
-        }
+        let bullet_mssg = new Signal();
+        bullet_mssg.type = "bullets";
+        bullet_mssg.info = [bullet];
+        tellPlayers(bullet_mssg);
+      } else if (ev.includes("wake")) {
+        let dummy_mssg = new Signal();
+        dummy_mssg.type = "players";
+        dummy_mssg.info.push(mssg.players);
+        ws.send(JSON.stringify(dummy_mssg));
+        dummy_mssg.type = "bullets";
+        dummy_mssg.info.push(mssg.bullets);
+        ws.send(JSON.stringify(mssg));
+      }
 
-        //move bullets and despawn old ones
-        let bullet_counter: number = 0;
-        for (const bullet of mssg.bullets) {
-          if (Date.now() - bullet.spawn_time > bullet_despawn) {
-            if (mssg.bullets.length > 1) {
-              mssg.bullets.splice(bullet_counter, bullet_counter);
-            } else {
-              mssg.bullets.pop();
-            }
+      //move bullets and despawn old ones
+      let bullet_counter: number = 0;
+      for (const bullet of mssg.bullets) {
+        if (Date.now() - bullet.spawn_time > bullet_despawn) {
+          if (mssg.bullets.length > 1) {
+            mssg.bullets.splice(bullet_counter, bullet_counter);
           } else {
-            bullet.x += bullet.angle[0] *
-              ((Date.now() - bullet.update_time) / 20);
-            bullet.y += bullet.angle[1] *
-              ((Date.now() - bullet.update_time) / 20);
-            bullet.update_time = Date.now();
+            mssg.bullets.pop();
           }
-          bullet_counter += 1;
+        } else {
+          bullet.x += bullet.angle[0] *
+            ((Date.now() - bullet.update_time) / 20);
+          bullet.y += bullet.angle[1] *
+            ((Date.now() - bullet.update_time) / 20);
+          bullet.update_time = Date.now();
         }
-        //tell players bullets
-        // let small_mssg = new Signal();
-        // small_mssg.type = "bullets";
-        // small_mssg.bullets = mssg.bullets;
-
-        // tellPlayers(small_mssg);
+        bullet_counter += 1;
       }
+      //tell players bullets
+      // let small_mssg = new Signal();
+      // small_mssg.type = "bullets";
+      // small_mssg.bullets = mssg.bullets;
 
-      //delete socket if connection closed
-      if (isWebSocketCloseEvent(ev)) {
-        sockets.delete(uid);
-      }
-    } catch {
+      // tellPlayers(small_mssg);
+    }
+
+    //delete socket if connection closed
+    if (isWebSocketCloseEvent(ev)) {
+      sockets.delete(uid);
     }
   }
 };

@@ -13,7 +13,6 @@ function setup() {
     socket_ready = true;
     ws.send("wake");
     ws.send(`pos0,0`);
-
   };
   const connectionDisplay = document.querySelector(".connections");
 
@@ -33,8 +32,8 @@ function setup() {
       }
       if (type === "bullets" || all) {
         const bullets = info;
-        bullets[0].update_time = Date.now()
-        bullets[0].spawn_time = Date.now()
+        bullets[0].update_time = Date.now();
+        bullets[0].spawn_time = Date.now();
 
         bullets_list.push(bullets[0]);
       }
@@ -57,7 +56,7 @@ function draw() {
       fill(200, 0, 0);
       if (player_counter == this_player) {
         fill(41, 167, 240);
-      } 
+      }
       player_counter++;
       circle(p.x, p.y, 50, 50);
     }
@@ -69,38 +68,25 @@ function draw() {
       circle(b.x, b.y, 25, 25);
     }
 
-      ws.send(`pos${horizontal_vel * 100},${vertical_vel * 100}`);
-    
+    ws.send(`pos${horizontal_vel * 100},${vertical_vel * 100}`);
   }
+  get_keys();
 }
 
-function keyPressed() {
-  if (keyCode == 87) {
+function get_keys() {
+  vertical_vel = 0;
+  horizontal_vel = 0;
+  if (keyIsDown(87)) {
     vertical_vel -= 1;
   }
-  if (keyCode == 83) {
+  if (keyIsDown(83)) {
     vertical_vel += 1;
   }
-  if (keyCode == 65) {
+  if (keyIsDown(65)) {
     horizontal_vel -= 1;
   }
-  if (keyCode == 68) {
+  if (keyIsDown(68)) {
     horizontal_vel += 1;
-  }
-}
-
-function keyReleased() {
-  if (keyCode == 87) {
-    vertical_vel += 1;
-  }
-  if (keyCode == 83) {
-    vertical_vel -= 1;
-  }
-  if (keyCode == 65) {
-    horizontal_vel += 1;
-  }
-  if (keyCode == 68) {
-    horizontal_vel -= 1;
   }
 }
 
