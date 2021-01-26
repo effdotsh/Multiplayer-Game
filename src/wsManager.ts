@@ -74,9 +74,13 @@ function tellPlayers(mesage: Signal) {
   sockets.forEach((user, uid) => {
     let socket = user.socket;
     try {
-      mesage.you_are = player_counter;
-      player_counter += 1;
-      socket.send(JSON.stringify(mesage));
+      if (!socket.isClosed) {
+        mesage.you_are = player_counter;
+        player_counter += 1;
+        socket.send(JSON.stringify(mesage));
+      } else {
+        sockets.delete(uid);
+      }
     } catch {
       user.player.failed_pings++;
       if (user.player.failed_pings > 100) {
