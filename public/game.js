@@ -6,6 +6,9 @@ var socket_ready = false;
 let vertical_vel = 0;
 let horizontal_vel = 0;
 
+let mouse_down = false;
+let last_fire = Date.now();
+
 function setup() {
   fill(255);
 
@@ -69,6 +72,9 @@ function draw() {
     }
 
     ws.send(`pos${horizontal_vel * 100},${vertical_vel * 100}`);
+    if (Date.now() - last_fire > fire_rate && mouse_down) {
+      ws.send(`fire${int(mouseX)}, ${int(mouseY)}`);
+    }
   }
   get_keys();
 }
@@ -91,5 +97,8 @@ function get_keys() {
 }
 
 function mousePressed() {
-  ws.send(`fire${int(mouseX)}, ${int(mouseY)}`);
+  mouse_down = true;
+}
+function mouseReleased() {
+  mouse_down = false;
 }

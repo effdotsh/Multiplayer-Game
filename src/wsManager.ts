@@ -4,6 +4,7 @@ import {
   WebSocket,
 } from "https://deno.land/std/ws/mod.ts";
 import { v4 } from "https://deno.land/std@0.83.0/uuid/mod.ts";
+import { DateTimeFormatter } from "https://deno.land/std@0.81.0/datetime/formatter.ts";
 
 //todo interface
 
@@ -11,6 +12,7 @@ class Player {
   x: number = 0;
   y: number = 0;
   failed_pings: number = 0;
+  last_fired: number = Date.now();
   updateTime: number = Date.now();
 }
 
@@ -34,6 +36,9 @@ class Signal {
   info: any[] = new Array();
   you_are: number = 0;
 }
+
+//@ts-ignore
+let fire_rate: number = +Deno.env.get("FIRE_RATE") || 200;
 
 let movement_speed: number = 5;
 let bullet_speed: number = 15;
@@ -100,6 +105,9 @@ const wsManager = async (ws: WebSocket) => {
     sockets.set(uid, { socket: ws, player: newPlayer });
   }
   for await (const ev of ws) {
+    // @ts-ignore
+    let player = sockets.get(uid).player;
+
     if (isWebSocketCloseEvent(ev)) {
       sockets.delete(uid);
     }
@@ -114,8 +122,6 @@ const wsManager = async (ws: WebSocket) => {
         );
 
         //move player
-        // @ts-ignore
-        let player = sockets.get(uid).player;
         let time_multiplier = (Date.now() - player.updateTime) / 20;
         player.updateTime = Date.now();
         velocity[0] *= time_multiplier;
@@ -143,24 +149,28 @@ const wsManager = async (ws: WebSocket) => {
         small_mssg.type = "players";
         tellPlayers(small_mssg);
       } else if (ev.includes("fire")) {
-        let locs_str: string[] = ev.split("fire")[1].split(", ");
-        let locs: number[] = [+locs_str[0], +locs_str[1]];
-        let bullet: Bullet = new Bullet();
-        // @ts-ignore
-        let player = sockets.get(uid).player;
-        bullet.x = player.x;
-        bullet.y = player.y;
-        bullet.angle = bindVector(
-          locs[0] - bullet.x,
-          locs[1] - bullet.y,
-          bullet_speed,
-        );
-        mssg.bullets.push(bullet);
+        if (Date.now() - player.last_fired > fire_rate) {
+          //@ts-ignore
+          sockets.get(uid).player.last_fired = Date.now();
+          let locs_str: string[] = ev.split("fire")[1].split(", ");
+          let locs: number[] = [+locs_str[0], +locs_str[1]];
+          let bullet: Bullet = new Bullet();
+          // @ts-ignore
+          let player = sockets.get(uid).player;
+          bullet.x = player.x;
+          bullet.y = player.y;
+          bullet.angle = bindVector(
+            locs[0] - bullet.x,
+            locs[1] - bullet.y,
+            bullet_speed,
+          );
+          mssg.bullets.push(bullet);
 
-        let bullet_mssg = new Signal();
-        bullet_mssg.type = "bullets";
-        bullet_mssg.info = [bullet];
-        tellPlayers(bullet_mssg);
+          let bullet_mssg = new Signal();
+          bullet_mssg.type = "bullets";
+          bullet_mssg.info = [bullet];
+          tellPlayers(bullet_mssg);
+        }
       } else if (ev.includes("wake")) {
         let dummy_mssg = new Signal();
         dummy_mssg.type = "players";

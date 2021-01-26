@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta charset="utf-8"/>
+    <meta charset="utf-8" />
     <title>Hello World</title>
 
     <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
@@ -11,15 +12,20 @@
 </head>
 
 <body>
-<h1>Multiplayer Test</h1>
-<div class="connections"><p>Loading...</p></div>
+    <h1>Multiplayer Test</h1>
+    <div class="connections">
+        <p>Loading...</p>
+    </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.min.js"></script>
-<script>let ws = new WebSocket('%SOCKET_URL%')</script>
-<script src="bullet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.min.js"></script>
+    <script>let ws = new WebSocket('%SOCKET_URL%')
+        let fire_rate = parseFloat("%FIRE_RATE%");
+    </script>
+    <script src="bullet.js"></script>
 
-<script src="game.js"></script>
+    <script src="game.js"></script>
 
 
 </body>
+
 </html>
