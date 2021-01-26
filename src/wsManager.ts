@@ -1,4 +1,5 @@
 import {
+  acceptable,
   isWebSocketCloseEvent,
   WebSocket,
 } from "https://deno.land/std/ws/mod.ts";
@@ -9,6 +10,7 @@ import { v4 } from "https://deno.land/std@0.83.0/uuid/mod.ts";
 class Player {
   x: number = 0;
   y: number = 0;
+  failed_pings: number = 0;
   updateTime: number = Date.now();
 }
 
@@ -69,11 +71,18 @@ function updateMssg() {
 
 function tellPlayers(mesage: Signal) {
   let player_counter = 0;
-  sockets.forEach((user) => {
+  sockets.forEach((user, uid) => {
     let socket = user.socket;
-    mesage.you_are = player_counter;
-    player_counter += 1;
-    socket.send(JSON.stringify(mesage));
+    try {
+      mesage.you_are = player_counter;
+      player_counter += 1;
+      socket.send(JSON.stringify(mesage));
+    } catch {
+      user.player.failed_pings++;
+      if (user.player.failed_pings > 100) {
+        sockets.delete(uid);
+      }
+    }
   });
 }
 
@@ -87,6 +96,9 @@ const wsManager = async (ws: WebSocket) => {
     sockets.set(uid, { socket: ws, player: newPlayer });
   }
   for await (const ev of ws) {
+    if (isWebSocketCloseEvent(ev)) {
+      sockets.delete(uid);
+    }
     if (typeof ev === "string") {
       if (ev.includes("pos")) { //Handle player movement
         // Scale player movement to fit spee
@@ -182,9 +194,6 @@ const wsManager = async (ws: WebSocket) => {
     }
 
     //delete socket if connection closed
-    if (isWebSocketCloseEvent(ev)) {
-      sockets.delete(uid);
-    }
   }
 };
 

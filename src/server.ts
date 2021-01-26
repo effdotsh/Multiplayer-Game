@@ -29,38 +29,31 @@ const index_html = await decoder.decode(
 console.log(socket_url);
 console.log(`http://localhost:${PORT}`);
 for await (const req of server) {
-  try {
-    if (req.url === "/ws") {
-      if (acceptable(req)) {
-        acceptWebSocket({
-          conn: req.conn,
-          bufReader: req.r,
-          bufWriter: req.w,
-          headers: req.headers,
-        }).then(wsManager);
-      }
-    } else if (!req.url.includes("..")) { //send all non-websocket requests to the public folder
-      if (req.url === "/" || req.url === "/index") {
-        req.respond({
-          status: 200,
-          body: index_html,
-        });
-      } else {
-        req.respond({
-          status: 200,
-          body: await Deno.open(`./public${req.url}`),
-        });
-      }
+  if (req.url === "/ws") {
+    if (acceptable(req)) {
+      acceptWebSocket({
+        conn: req.conn,
+        bufReader: req.r,
+        bufWriter: req.w,
+        headers: req.headers,
+      }).then(wsManager);
+    }
+  } else if (!req.url.includes("..")) { //send all non-websocket requests to the public folder
+    if (req.url === "/" || req.url === "/index") {
+      req.respond({
+        status: 200,
+        body: index_html,
+      });
     } else {
       req.respond({
-        status: 401,
-        body: "Forbidden",
+        status: 200,
+        body: await Deno.open(`./public${req.url}`),
       });
     }
-  } catch {
+  } else {
     req.respond({
-      status: 500,
-      body: "Oops",
+      status: 401,
+      body: "Forbidden",
     });
   }
 }
