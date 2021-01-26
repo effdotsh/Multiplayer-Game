@@ -20,10 +20,16 @@ class Bullet {
   update_time: number = Date.now();
 }
 
-class Signal {
+class GameData {
   type: string = "all";
   players: Player[] = new Array();
   bullets: Bullet[] = new Array();
+  you_are: number = 0;
+}
+
+class Signal {
+  type: string = "all";
+  info: any[] = new Array();
   you_are: number = 0;
 }
 
@@ -34,7 +40,7 @@ let bullet_despawn: number = 3000;
 let canvasX: number = 1000;
 let canvasY: number = 1000;
 
-let mssg: Signal = new Signal();
+let mssg: GameData = new GameData();
 
 let sockets = new Map<string, { socket: WebSocket; player: Player }>();
 
@@ -118,7 +124,7 @@ const wsManager = async (ws: WebSocket) => {
           //tell players about the movement
           mssg.players = updateMssg();
           let small_mssg = new Signal();
-          small_mssg.players = mssg.players;
+          small_mssg.info = mssg.players;
           small_mssg.type = "players";
           tellPlayers(small_mssg);
         } else if (ev.includes("fire")) {
@@ -135,8 +141,18 @@ const wsManager = async (ws: WebSocket) => {
             bullet_speed,
           );
           mssg.bullets.push(bullet);
+
+          let bullet_mssg = new Signal;
+          bullet_mssg.type = 'bullets'
+          bullet_mssg.info = [bullet]
+          tellPlayers(bullet_mssg)
         } else if (ev.includes("wake")) {
-          mssg.type = "all";
+          let dummy_mssg = new Signal
+          dummy_mssg.type = "players";
+          dummy_mssg.info.push(mssg.players)
+          ws.send(JSON.stringify(dummy_mssg));
+          dummy_mssg.type = 'bullets'
+          dummy_mssg.info.push(mssg.bullets)
           ws.send(JSON.stringify(mssg));
         }
 
@@ -159,11 +175,11 @@ const wsManager = async (ws: WebSocket) => {
           bullet_counter += 1;
         }
         //tell players bullets
-        let small_mssg = new Signal();
-        small_mssg.type = "bullets";
-        small_mssg.bullets = mssg.bullets;
+        // let small_mssg = new Signal();
+        // small_mssg.type = "bullets";
+        // small_mssg.bullets = mssg.bullets;
 
-        tellPlayers(small_mssg);
+        // tellPlayers(small_mssg);
       }
 
       //delete socket if connection closed
