@@ -1,10 +1,7 @@
-import { serve } from "https://deno.land/std@0.84.0/http/server.ts";
+import { serve } from "https://deno.land/std/http/server.ts";
 
 //allows for websocket
-import {
-  acceptable,
-  acceptWebSocket,
-} from "https://deno.land/std@0.84.0/ws/mod.ts";
+import { acceptable, acceptWebSocket } from "https://deno.land/std/ws/mod.ts";
 
 //Middleware to serve files
 import { Application } from "https://deno.land/x/abc@v1.2.4/mod.ts";

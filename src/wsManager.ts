@@ -4,7 +4,7 @@ import {
   WebSocket,
   WebSocketEvent,
 } from "https://deno.land/std/ws/mod.ts";
-import { v4 } from "https://deno.land/std@0.83.0/uuid/mod.ts";
+import { v4 } from "https://deno.land/std/uuid/mod.ts";
 
 //todo interface
 
