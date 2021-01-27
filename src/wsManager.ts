@@ -7,10 +7,12 @@ import {
 import { v4 } from "https://deno.land/std/uuid/mod.ts";
 
 //todo interface
+let canvasX: number = 1000;
+let canvasY: number = 1000;
 
 class Player {
-  x: number = 0;
-  y: number = 0;
+  x: number = Math.floor(Math.random() * canvasX);
+  y: number = Math.floor(Math.random() * canvasY);
   failed_pings: number = 0;
   last_fired: number = Date.now();
   updateTime: number = Date.now();
@@ -45,9 +47,6 @@ let fire_rate: number = +Deno.env.get("FIRE_RATE") || 200;
 let movement_speed: number = 5;
 let bullet_speed: number = 15;
 let bullet_despawn: number = 3000;
-
-let canvasX: number = 1000;
-let canvasY: number = 1000;
 
 let mssg: GameData = new GameData();
 
@@ -190,9 +189,10 @@ function check_collisions(
     });
   });
   kill_list.forEach((target) => {
-    let bob = users.get(target);
-    if (bob != undefined) {
-      bob.player.living = false;
+    let hit = users.get(target);
+    if (hit != undefined) {
+      // hit.player.living = false;
+      hit.player = new Player();
     }
   });
 
@@ -201,62 +201,64 @@ function check_collisions(
 
 const wsManager = async (ws: WebSocket) => {
   const uid = v4.generate();
-  if (!sockets.has(uid)) {
-    let newPlayer = new Player();
-    newPlayer.x = Math.floor(Math.random() * canvasX);
-    newPlayer.y = Math.floor(Math.random() * canvasY);
-
-    sockets.set(uid, { socket: ws, player: newPlayer });
-  }
-  for await (const ev of ws) {
-    // @ts-ignore
-    let player = sockets.get(uid).player;
-
-    //delete socket if connection closed
-    if (isWebSocketCloseEvent(ev)) {
-      sockets.delete(uid);
-    } else if (typeof ev === "string") {
-      if (ev.includes("pos")) { //Handle player movement
-        updatePositions(uid, ws, player, ev);
-      } else if (ev.includes("fire") && player.living) {
-        fire_bullet(uid, ws, player, ev);
-      } else if (ev.includes("wake")) {
-        if (!ws.isClosed) {
-          try {
-            let dummy_mssg = new Signal();
-            dummy_mssg.type = "players";
-            dummy_mssg.info.push(mssg.players);
-            ws.send(JSON.stringify(dummy_mssg));
-            dummy_mssg.type = "bullets";
-            dummy_mssg.info.push(mssg.bullets);
-            ws.send(JSON.stringify(mssg));
-          } catch {}
-        } else {
-          sockets.delete(uid);
-        }
-      }
-
-      //move bullets and despawn old ones
-      let bullet_counter: number = 0;
-      for (const bullet of mssg.bullets) {
-        if (Date.now() - bullet.spawn_time > bullet_despawn) {
-          if (mssg.bullets.length > 1) {
-            mssg.bullets.splice(bullet_counter, bullet_counter);
-          } else {
-            mssg.bullets.pop();
-          }
-        } else {
-          bullet.x += bullet.angle[0] *
-            ((Date.now() - bullet.update_time) / 20);
-          bullet.y += bullet.angle[1] *
-            ((Date.now() - bullet.update_time) / 20);
-          bullet.update_time = Date.now();
-        }
-        bullet_counter += 1;
-      }
-
-      sockets = check_collisions(sockets, mssg.bullets);
+  if (!ws.isClosed) {
+    if (!sockets.has(uid)) {
+      sockets.set(uid, { socket: ws, player: new Player() });
     }
+    for await (const ev of ws) {
+      //@ts-ignore
+      let player = sockets.get(uid).player;
+
+      if (player != undefined) {
+        //delete socket if connection closed
+        if (isWebSocketCloseEvent(ev)) {
+          sockets.delete(uid);
+        } else if (typeof ev === "string") {
+          if (ev.includes("pos")) { //Handle player movement
+            updatePositions(uid, ws, player, ev);
+          } else if (ev.includes("fire") && player.living) {
+            fire_bullet(uid, ws, player, ev);
+          } else if (ev.includes("wake")) {
+            if (!ws.isClosed) {
+              try {
+                let dummy_mssg = new Signal();
+                dummy_mssg.type = "players";
+                dummy_mssg.info.push(mssg.players);
+                ws.send(JSON.stringify(dummy_mssg));
+                dummy_mssg.type = "bullets";
+                dummy_mssg.info.push(mssg.bullets);
+                ws.send(JSON.stringify(mssg));
+              } catch {}
+            } else {
+              sockets.delete(uid);
+            }
+          }
+
+          //move bullets and despawn old ones
+          let bullet_counter: number = 0;
+          for (const bullet of mssg.bullets) {
+            if (Date.now() - bullet.spawn_time > bullet_despawn) {
+              if (mssg.bullets.length > 1) {
+                mssg.bullets.splice(bullet_counter, bullet_counter);
+              } else {
+                mssg.bullets.pop();
+              }
+            } else {
+              bullet.x += bullet.angle[0] *
+                ((Date.now() - bullet.update_time) / 20);
+              bullet.y += bullet.angle[1] *
+                ((Date.now() - bullet.update_time) / 20);
+              bullet.update_time = Date.now();
+            }
+            bullet_counter += 1;
+          }
+
+          sockets = check_collisions(sockets, mssg.bullets);
+        }
+      }
+    }
+  } else {
+    ws.close();
   }
 };
 

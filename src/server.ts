@@ -57,23 +57,3 @@ for await (const req of server) {
     });
   }
 }
-
-/*
-021-01-27T03:02:52.235553+00:00 app[web.1]: error: Uncaught (in promise) ConnectionReset: Socket has already been closed
-
-2021-01-27T03:02:52.235565+00:00 app[web.1]:             rest.forEach((e) => e.d.reject(new Deno.errors.ConnectionReset("Socket has already been closed")));
-
-2021-01-27T03:02:52.235566+00:00 app[web.1]:           ^
-
-2021-01-27T03:02:52.235567+00:00 app[web.1]:     at mod.ts:384:11
-
-2021-01-27T03:02:52.235568+00:00 app[web.1]:     at Array.forEach (<anonymous>)
-
-2021-01-27T03:02:52.235569+00:00 app[web.1]:     at WebSocketImpl.ensureSocketClosed (mod.ts:382:12)
-
-2021-01-27T03:02:52.235569+00:00 app[web.1]:     at WebSocketImpl.close (mod.ts:364:12)
-
-2021-01-27T03:02:52.235569+00:00 app[web.1]:     at async WebSocketImpl.[Symbol.asyncIterator] (mod.ts:266:11)
-
-2021-01-27T03:02:52.235570+00:00 app[web.1]:     at async wsManager (wsManager.ts:211:20)
-*/
