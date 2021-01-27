@@ -61,7 +61,9 @@ function draw() {
         fill(41, 167, 240);
       }
       player_counter++;
-      circle(p.x, p.y, 50, 50);
+      if (p.living) {
+        circle(p.x, p.y, 50, 50);
+      }
     }
 
     //iterate spawning bullets

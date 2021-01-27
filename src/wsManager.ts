@@ -15,6 +15,7 @@ class Player {
   failed_pings: number = 0;
   last_fired: number = Date.now();
   updateTime: number = Date.now();
+  living: boolean = true;
 }
 
 class Bullet {
@@ -175,6 +176,8 @@ function check_collisions(
   users: Map<any, any>,
   bullets: Bullet[],
 ) {
+  let kill_list: string[] = new Array();
+
   bullets.forEach((bullet) => {
     users.forEach((user, uid) => {
       let player = user.player;
@@ -182,10 +185,14 @@ function check_collisions(
         bullet.fired_by != uid && Math.abs(bullet.x - player.x) < 50 &&
         Math.abs(bullet.y - player.y) < 50
       ) {
-        console.log("hit");
+        kill_list.push(uid);
       }
     });
   });
+  kill_list.forEach((target) => {
+    users.get(target).player.living = false;
+  });
+  return users;
 }
 
 const wsManager = async (ws: WebSocket) => {
@@ -205,7 +212,7 @@ const wsManager = async (ws: WebSocket) => {
     if (isWebSocketCloseEvent(ev)) {
       sockets.delete(uid);
     }
-    if (typeof ev === "string") {
+    if (typeof ev === "string" && sockets.get(uid)?.player.living) {
       if (ev.includes("pos")) { //Handle player movement
         updatePositions(uid, ws, player, ev);
       } else if (ev.includes("fire")) {
@@ -239,7 +246,7 @@ const wsManager = async (ws: WebSocket) => {
         bullet_counter += 1;
       }
 
-      check_collisions(sockets, mssg.bullets);
+      sockets = check_collisions(sockets, mssg.bullets);
     }
   }
 };
