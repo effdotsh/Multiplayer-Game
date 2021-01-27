@@ -5,7 +5,6 @@ import {
   WebSocketEvent,
 } from "https://deno.land/std/ws/mod.ts";
 import { v4 } from "https://deno.land/std@0.83.0/uuid/mod.ts";
-import { DateTimeFormatter } from "https://deno.land/std@0.81.0/datetime/formatter.ts";
 
 //todo interface
 
@@ -173,7 +172,7 @@ function fire_bullet(
 }
 
 function check_collisions(
-  users: Map<any, any>,
+  users: Map<string, { socket: WebSocket; player: Player }>,
   bullets: Bullet[],
 ) {
   let kill_list: string[] = new Array();
@@ -183,15 +182,20 @@ function check_collisions(
       let player = user.player;
       if (
         bullet.fired_by != uid && Math.abs(bullet.x - player.x) < 50 &&
-        Math.abs(bullet.y - player.y) < 50
+        Math.abs(bullet.y - player.y) < 50 &&
+        player.living
       ) {
         kill_list.push(uid);
       }
     });
   });
   kill_list.forEach((target) => {
-    users.get(target).player.living = false;
+    let bob = users.get(target);
+    if (bob != undefined) {
+      bob.player.living = false;
+    }
   });
+
   return users;
 }
 
@@ -211,20 +215,25 @@ const wsManager = async (ws: WebSocket) => {
     //delete socket if connection closed
     if (isWebSocketCloseEvent(ev)) {
       sockets.delete(uid);
-    }
-    if (typeof ev === "string" && sockets.get(uid)?.player.living) {
+    } else if (typeof ev === "string") {
       if (ev.includes("pos")) { //Handle player movement
         updatePositions(uid, ws, player, ev);
-      } else if (ev.includes("fire")) {
+      } else if (ev.includes("fire") && player.living) {
         fire_bullet(uid, ws, player, ev);
       } else if (ev.includes("wake")) {
-        let dummy_mssg = new Signal();
-        dummy_mssg.type = "players";
-        dummy_mssg.info.push(mssg.players);
-        ws.send(JSON.stringify(dummy_mssg));
-        dummy_mssg.type = "bullets";
-        dummy_mssg.info.push(mssg.bullets);
-        ws.send(JSON.stringify(mssg));
+        if (!ws.isClosed) {
+          try {
+            let dummy_mssg = new Signal();
+            dummy_mssg.type = "players";
+            dummy_mssg.info.push(mssg.players);
+            ws.send(JSON.stringify(dummy_mssg));
+            dummy_mssg.type = "bullets";
+            dummy_mssg.info.push(mssg.bullets);
+            ws.send(JSON.stringify(mssg));
+          } catch {}
+        } else {
+          sockets.delete(uid);
+        }
       }
 
       //move bullets and despawn old ones
