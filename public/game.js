@@ -42,13 +42,13 @@ function setup() {
       bullets_list.push(bullets[0]);
     }
     if (type === "despawn") {
-      let bullet_id_list = [];
-      info.forEach((bullet) => {
-        bullet_id_list.push(bullet.id);
-      });
-      bullets_list = bullets_list.filter((bullet) => {
-        !bullet_id_list.includes(bullet.id);
-      });
+      for (let b = 0; b < bullets_list.length; b++) {
+        for (let d = 0; d < info.length; d++) {
+          if (bullets_list[b].id == info[d]) {
+            bullets_list.splice(b, 1);
+          }
+        }
+      }
     }
     const { you_are } = JSON.parse(data);
 

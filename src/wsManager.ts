@@ -187,17 +187,17 @@ function check_collisions(
   bullets: Bullet[],
 ) {
   let hit_list: string[] = new Array();
-  let bullet_trash: Bullet[] = new Array();
+  let bullet_trash: string[] = new Array();
   bullets.forEach((bullet) => {
     users.forEach((user, uid) => {
       let player = user.player;
       if (
-        bullet.fired_by != uid && Math.abs(bullet.x - player.x) < 25 &&
-        Math.abs(bullet.y - player.y) < 25 &&
+        bullet.fired_by != uid && Math.abs(bullet.x - player.x) < 37.5 &&
+        Math.abs(bullet.y - player.y) < 37.5 &&
         player.living
       ) {
         hit_list.push(uid);
-        bullet_trash.push(bullet);
+        bullet_trash.push(bullet.id);
 
         let shooter = users.get(bullet.fired_by)?.player;
         if (shooter != undefined) {
@@ -207,7 +207,14 @@ function check_collisions(
       }
     });
   });
-  bullets = bullets.filter((bullet) => !bullet_trash.includes(bullet));
+  for (let b = 0; b < bullets.length; b++) {
+    for (let d = 0; d < bullet_trash.length; d++) {
+      if (bullets[b].id == bullet_trash[d]) {
+        bullets.splice(b, 1);
+      }
+    }
+  }
+
   hit_list.forEach((target) => {
     let hit = users.get(target);
     if (hit != undefined) {
@@ -217,7 +224,7 @@ function check_collisions(
     }
   });
 
-  return { users: users, bulelts: bullets, bullet_trash: bullet_trash };
+  return { users: users, bullets: bullets, bullet_trash: bullet_trash };
 }
 
 const wsManager = async (ws: WebSocket) => {
@@ -277,7 +284,7 @@ const wsManager = async (ws: WebSocket) => {
         //check collisions, despawn bullets
         let collisions = check_collisions(sockets, mssg.bullets);
         sockets = collisions.users;
-        mssg.bullets = collisions.bulelts;
+        mssg.bullets = collisions.bullets;
         if (collisions.bullet_trash.length > 0) {
           let despawn_mmsg: Signal = new Signal();
           despawn_mmsg.type = "despawn";
