@@ -32,14 +32,14 @@ class Bullet {
 }
 
 class GameData {
-  type: string = "all";
+  type: string = "pos";
   players: Player[] = new Array();
   bullets: Bullet[] = new Array();
   you_are: number = 0;
 }
 
 class Signal {
-  type: string = "all";
+  type: string = "pos";
   info: any[] = new Array();
   you_are: number = 0;
 }
@@ -129,14 +129,14 @@ function updatePositions(
   velocity[1] *= time_multiplier;
   player.x += velocity[0];
   player.y += velocity[1];
-  player.x = player.x > 1000
-    ? player.x = 1000
+  player.x = player.x > canvasX
+    ? player.x = canvasX
     : player.x < 0
     ? player.x = 0
     : player.x = player.x;
 
-  player.y = player.y > 1000
-    ? player.y = 1000
+  player.y = player.y > canvasY
+    ? player.y = canvasY
     : player.y < 0
     ? player.y = 0
     : player.y = player.y;
@@ -185,7 +185,7 @@ function fire_bullet(
 function check_collisions(
   users: Map<string, { socket: WebSocket; player: Player }>,
   bullets: Bullet[],
-): [Map<string, { socket: WebSocket; player: Player }>, Bullet[]] {
+) {
   let hit_list: string[] = new Array();
   let bullet_trash: Bullet[] = new Array();
   bullets.forEach((bullet) => {
@@ -198,6 +198,12 @@ function check_collisions(
       ) {
         hit_list.push(uid);
         bullet_trash.push(bullet);
+
+        let shooter = users.get(bullet.fired_by)?.player;
+        if (shooter != undefined) {
+          //@ts-ignore
+          users.get(bullet.fired_by).player.score++;
+        }
       }
     });
   });
@@ -206,11 +212,12 @@ function check_collisions(
     let hit = users.get(target);
     if (hit != undefined) {
       // hit.player.living = false;
-      hit.player = new Player();
+      hit.player.x = Math.floor(Math.random() * canvasX);
+      hit.player.y = Math.floor(Math.random() * canvasX);
     }
   });
 
-  return [users, bullets];
+  return { users: users, bulelts: bullets, bullet_trash: bullet_trash };
 }
 
 const wsManager = async (ws: WebSocket) => {
@@ -267,7 +274,16 @@ const wsManager = async (ws: WebSocket) => {
           bullet_counter += 1;
         }
 
-        sockets = check_collisions(sockets, mssg.bullets)[0];
+        //check collisions, despawn bullets
+        let collisions = check_collisions(sockets, mssg.bullets);
+        sockets = collisions.users;
+        mssg.bullets = collisions.bulelts;
+        if (collisions.bullet_trash.length > 0) {
+          let despawn_mmsg: Signal = new Signal();
+          despawn_mmsg.type = "despawn";
+          despawn_mmsg.info = collisions.bullet_trash;
+          tellPlayers(despawn_mmsg);
+        }
       }
     }
   }
