@@ -44,10 +44,8 @@ class Signal {
   you_are: number = 0;
 }
 
-//@ts-ignore
-let fire_rate: number = +Deno.env.get("FIRE_RATE") || 200;
-//@ts-ignore
-let bullet_dmg: number = +Deno.env.get("BULLET_DMG") || 10;
+let fire_rate: number = parseInt(Deno.env.get("FIRE_RATE") ?? "200");
+let bullet_dmg: number = parseInt(Deno.env.get("BULLET_DMG") ?? "35");
 
 let movement_speed: number = 5;
 let bullet_speed: number = 15;
@@ -199,10 +197,17 @@ function check_collisions(
         hit_list.push(uid);
         bullet_trash.push(bullet.id);
 
-        let shooter = users.get(bullet.fired_by)?.player;
-        if (shooter != undefined) {
-          //@ts-ignore
-          users.get(bullet.fired_by).player.score++;
+        let hit = users.get(uid);
+        if (hit != undefined) {
+          let dmg = dealDamage(hit.player);
+          hit.player = dmg.player;
+          if (dmg.killed) {
+            let shooter = users.get(bullet.fired_by)?.player;
+            if (shooter != undefined) {
+              //@ts-ignore
+              users.get(bullet.fired_by).player.score++;
+            }
+          }
         }
       }
     });
@@ -215,18 +220,28 @@ function check_collisions(
     }
   }
 
-  hit_list.forEach((target) => {
-    let hit = users.get(target);
-    if (hit != undefined) {
-      // hit.player.living = false;
-      hit.player.x = Math.floor(Math.random() * canvasX);
-      hit.player.y = Math.floor(Math.random() * canvasX);
-    }
-  });
+  // hit_list.forEach((target) => {
+  //   let hit = users.get(target);
+  //   if (hit != undefined) {
+  //     // hit.player.living = false;
+  //     hit.player = dealDamage(hit.player);
+  //   }
+  // });
 
   return { users: users, bullets: bullets, bullet_trash: bullet_trash };
 }
-
+function dealDamage(player: Player): { player: Player; killed: boolean } {
+  let killed = false;
+  player.health -= bullet_dmg;
+  if (player.health <= 0) {
+    killed = true;
+    player.health = 100;
+    player.x = Math.floor(Math.random() * canvasX);
+    player.y = Math.floor(Math.random() * canvasY);
+    player.score = Math.round(player.score - player.score / 5);
+  }
+  return { player: player, killed: killed };
+}
 const wsManager = async (ws: WebSocket) => {
   const uid = v4.generate();
   if (!sockets.has(uid)) {

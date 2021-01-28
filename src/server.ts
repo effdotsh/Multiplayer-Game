@@ -13,10 +13,8 @@ import { wsManager } from "./wsManager.ts";
 import "https://deno.land/x/dotenv/load.ts";
 
 //Get port from env vars
-// @ts-ignore
-let fire_rate: string = +Deno.env.get("FIRE_RATE") || "200";
-//@ts-ignore
-const PORT: number = +Deno.env.get("PORT") || 8080;
+let fire_rate: string = Deno.env.get("FIRE_RATE") ?? "200";
+const PORT: number = parseInt(Deno.env.get("PORT") ?? "8080");
 const server = serve({ port: PORT });
 const socket_url = Deno.env.get("SOCKET_URL") || `ws://localhost:${PORT}/ws`;
 
