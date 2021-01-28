@@ -192,8 +192,8 @@ function check_collisions(
     users.forEach((user, uid) => {
       let player = user.player;
       if (
-        bullet.fired_by != uid && Math.abs(bullet.x - player.x) < 50 &&
-        Math.abs(bullet.y - player.y) < 50 &&
+        bullet.fired_by != uid && Math.abs(bullet.x - player.x) < 25 &&
+        Math.abs(bullet.y - player.y) < 25 &&
         player.living
       ) {
         hit_list.push(uid);
