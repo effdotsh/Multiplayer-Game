@@ -47,6 +47,11 @@ function setup() {
       console.log(data);
     }
   });
+
+  window.onunload = function () {
+    ws.close();
+    return null;
+  };
 }
 
 function draw() {

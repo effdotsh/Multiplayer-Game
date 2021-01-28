@@ -45,10 +45,21 @@ for await (const req of server) {
         body: index_html,
       });
     } else {
-      req.respond({
-        status: 200,
-        body: await Deno.open(`./public${req.url}`),
-      });
+      let status: number;
+      try {
+        let file = await Deno.open(`./public${req.url}`);
+        status = 200;
+        req.respond({
+          status: status,
+          body: file,
+        });
+      } catch (err) {
+        status = 404;
+        req.respond({
+          status: status,
+          body: err,
+        });
+      }
     }
   } else {
     req.respond({
