@@ -183,7 +183,6 @@ function fire_bullet(
       locs[1],
       bullet_speed,
     );
-    console.log(bullet.angle);
     bullet.fired_by = uid;
     mssg.bullets.push(bullet);
 
