@@ -75,14 +75,18 @@ function draw() {
       }
       player_counter++;
       if (p.living) {
-        circle(p.x, p.y, 50, 50);
-        fill(255);
-        textAlign(CENTER, CENTER);
+        if (Date.now() - p.last_dash > dash_time) {
+          circle(p.x, p.y, 50, 50);
+          fill(255);
+          textAlign(CENTER, CENTER);
 
-        text(p.score, p.x, p.y);
-        rectMode(CORNER);
-        fill(0, 200, 0);
-        rect(p.x - 25, p.y - 40, p.health / 100 * 50, 10);
+          text(p.score, p.x, p.y);
+          rectMode(CORNER);
+          fill(0, 200, 0);
+          rect(p.x - 25, p.y - 40, p.health / 100 * 50, 10);
+        } else {
+          draw_dashing(p);
+        }
       }
     }
 
@@ -109,7 +113,6 @@ function draw() {
   fill(50, 50, 200);
 
   let cooldown = (Date.now() - last_dash) / dash_cooldown;
-  console.log(dash_cooldown);
   cooldown = cooldown > 1 ? cooldown = 1 : cooldown = cooldown;
   if (cooldown == 1) {
     fill(41, 167, 240);
@@ -148,11 +151,38 @@ function keyPressed() {
 }
 function dash() {
   let cooldown = (Date.now() - last_dash) / dash_cooldown;
-  console.log(dash_cooldown);
   cooldown = cooldown > 1 ? cooldown = 1 : cooldown = cooldown;
   if (cooldown == 1) {
     last_dash = Date.now();
 
     ws.send(`dash${horizontal_vel * 100},${vertical_vel * 100}`);
   }
+}
+
+function draw_dashing(player) {
+  let percent_dashed = (Date.now() - player.last_dash) / dash_time;
+  percent_dashed = (percent_dashed);
+  let moved_x = player.x - player.dash_from_x;
+  let moved_y = player.y - player.dash_from_y;
+  let new_x = player.dash_from_x + (moved_x * percent_dashed);
+  let new_y = player.dash_from_y + (moved_y * percent_dashed);
+
+  console.log(percent_dashed);
+
+  circle(new_x, new_y, 50, 50);
+  fill(255);
+  textAlign(CENTER, CENTER);
+
+  text(player.score, new_x, new_y);
+  rectMode(CORNER);
+  fill(0, 200, 0);
+  rect(new_x - 25, new_y - 40, player.health / 100 * 50, 10);
+
+  fill(255);
+  // circle(player.x, player.y, 50, 50);
+  // circle(player.dash_from_x, player.dash_from_y, 50, 50);
+}
+
+function easeInOutSine(x) {
+  return -(cos(PI * x) - 1) / 2;
 }
