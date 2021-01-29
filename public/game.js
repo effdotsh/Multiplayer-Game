@@ -18,6 +18,7 @@ let size_scaler = 1;
 let canvasX = 2290;
 let canvasY = 950;
 
+
 function setup() {
   fill(255);
   textAlign(CENTER, CENTER);
@@ -105,6 +106,7 @@ function draw() {
           fill(255);
           textAlign(CENTER, CENTER);
 
+
           text(p.score, p.x, p.y);
           rectMode(CORNER);
           fill(0, 200, 0);
@@ -117,6 +119,7 @@ function draw() {
             );
           }
           dashing_players.get(p.id).server = p.last_dash;
+
           draw_dashing(p);
         }
       }
@@ -199,6 +202,7 @@ function dash() {
   let cooldown = (Date.now() - last_dash) / dash_cooldown;
   cooldown = cooldown > 1 ? cooldown = 1 : cooldown = cooldown;
   if (cooldown == 1 && (horizontal_vel != 0 || vertical_vel != 0)) {
+
     last_dash = Date.now();
 
     ws.send(`dash${horizontal_vel * 100},${vertical_vel * 100}`);
@@ -209,6 +213,7 @@ function draw_dashing(player) {
   let percent_dashed = (Date.now() - dashing_players.get(player.id).client) /
     dash_time;
   percent_dashed = easeInOutSine(percent_dashed);
+
   let moved_x = player.x - player.dash_from_x;
   let moved_y = player.y - player.dash_from_y;
   let new_x = player.dash_from_x + (moved_x * percent_dashed);
