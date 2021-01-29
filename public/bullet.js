@@ -1,10 +1,8 @@
 let bullet_despawn = 3000;
 function move_bullets(bullets) {
   if (bullets != []) {
-
     let bullet_counter = 0;
     for (const bullet of bullets) {
-
       if (Date.now() - bullet.spawn_time > bullet_despawn) {
         if (bullets.length > 1) {
           bullets.splice(bullet_counter, bullet_counter);
@@ -20,6 +18,6 @@ function move_bullets(bullets) {
       }
       bullet_counter += 1;
     }
-  } 
+  }
   return bullets;
 }
