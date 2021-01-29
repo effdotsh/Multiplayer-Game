@@ -1,5 +1,8 @@
 var players_list = [];
 var bullets_list = [];
+
+var dashing_players = new Map();
+
 var this_player = 0;
 var socket_ready = false;
 
@@ -75,7 +78,18 @@ function draw() {
       }
       player_counter++;
       if (p.living) {
-        if (Date.now() - p.last_dash > dash_time) {
+        if (dashing_players.get(p.id) == undefined) {
+          dashing_players.set(
+            p.id,
+            { client: Date.now(), server: p.last_dash },
+          );
+        }
+        let last_recorded_dash = dashing_players.get(p.id)?.server ?? 0;
+
+        if (
+          last_recorded_dash == p.last_dash &&
+          Date.now() - dashing_players.get(p.id).client > dash_time
+        ) {
           circle(p.x, p.y, 50, 50);
           fill(255);
           textAlign(CENTER, CENTER);
@@ -85,6 +99,14 @@ function draw() {
           fill(0, 200, 0);
           rect(p.x - 25, p.y - 40, p.health / 100 * 50, 10);
         } else {
+          if (last_recorded_dash != p.last_dash) {
+            dashing_players.set(
+              p.id,
+              { client: Date.now(), server: p.last_dash },
+            );
+          }
+          dashing_players.get(p.id).server = p.last_dash;
+          console.log("dash");
           draw_dashing(p);
         }
       }
@@ -152,7 +174,7 @@ function keyPressed() {
 function dash() {
   let cooldown = (Date.now() - last_dash) / dash_cooldown;
   cooldown = cooldown > 1 ? cooldown = 1 : cooldown = cooldown;
-  if (cooldown == 1) {
+  if (cooldown == 1 && (horizontal_vel != 0 || vertical_vel != 0)) {
     last_dash = Date.now();
 
     ws.send(`dash${horizontal_vel * 100},${vertical_vel * 100}`);
@@ -160,8 +182,9 @@ function dash() {
 }
 
 function draw_dashing(player) {
-  let percent_dashed = (Date.now() - player.last_dash) / dash_time;
-  percent_dashed = (percent_dashed);
+  let percent_dashed = (Date.now() - dashing_players.get(player.id).client) /
+    dash_time;
+  percent_dashed = easeInOutSine(percent_dashed);
   let moved_x = player.x - player.dash_from_x;
   let moved_y = player.y - player.dash_from_y;
   let new_x = player.dash_from_x + (moved_x * percent_dashed);

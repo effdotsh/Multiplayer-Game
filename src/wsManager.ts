@@ -11,6 +11,7 @@ let canvasX: number = 1000;
 let canvasY: number = 1000;
 
 class Player {
+  id = gen_id();
   x: number = Math.floor(Math.random() * canvasX);
   y: number = Math.floor(Math.random() * canvasY);
   failed_pings: number = 0;
