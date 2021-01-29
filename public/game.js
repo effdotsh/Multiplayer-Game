@@ -79,13 +79,16 @@ function draw() {
         textAlign(CENTER, CENTER);
 
         text(p.score, p.x, p.y);
+        rectMode(CORNER);
+        fill(0, 200, 0);
+        rect(p.x - 25, p.y - 40, p.health / 100 * 50, 10);
       }
     }
 
     //iterate spawning bullets
+    fill(252, 186, 3);
     bullets_list = move_bullets(bullets_list);
     for (b of bullets_list) {
-      fill(0, 200, 0);
       circle(b.x, b.y, 25, 25);
     }
 
