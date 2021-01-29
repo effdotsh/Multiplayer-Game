@@ -6,7 +6,6 @@ import {
 } from "https://deno.land/std/ws/mod.ts";
 import { v4 } from "https://deno.land/std/uuid/mod.ts";
 
-//todo interface
 let canvasX: number = 2290;
 let canvasY: number = 950;
 
