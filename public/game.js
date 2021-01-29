@@ -18,7 +18,6 @@ let size_scaler = 1;
 let canvasX = 2290;
 let canvasY = 950;
 
-
 function setup() {
   fill(255);
   textAlign(CENTER, CENTER);
@@ -106,7 +105,6 @@ function draw() {
           fill(255);
           textAlign(CENTER, CENTER);
 
-
           text(p.score, p.x, p.y);
           rectMode(CORNER);
           fill(0, 200, 0);
@@ -144,29 +142,23 @@ function draw() {
   get_keys();
 
   //draw dash_cooldown bar
-  let bar_width = 800;
-  let bar_height = 30;
-
+  let bar_width = 50;
+  let bar_height = 10;
   fill(200);
-  rect(
-    canvasX / 2 - bar_width / 2,
-    canvasY - 2 * bar_height,
-    bar_width + 5,
-    bar_height + 5,
-  );
-  fill(50, 50, 200);
+  fill(41, 167, 240);
 
   let cooldown = (Date.now() - last_dash) / dash_cooldown;
   cooldown = cooldown > 1 ? cooldown = 1 : cooldown = cooldown;
-  if (cooldown == 1) {
-    fill(41, 167, 240);
+
+  let player = players_list[this_player];
+  if (cooldown != 1) {
+    rect(
+      player.x - bar_width / 2,
+      player.y - 50,
+      cooldown * bar_width,
+      bar_height,
+    );
   }
-  rect(
-    canvasX / 2 - bar_width / 2 + 2.5,
-    canvasY - 2 * bar_height + 2.5,
-    cooldown * bar_width,
-    bar_height,
-  );
 }
 
 function get_keys() {
@@ -202,7 +194,6 @@ function dash() {
   let cooldown = (Date.now() - last_dash) / dash_cooldown;
   cooldown = cooldown > 1 ? cooldown = 1 : cooldown = cooldown;
   if (cooldown == 1 && (horizontal_vel != 0 || vertical_vel != 0)) {
-
     last_dash = Date.now();
 
     ws.send(`dash${horizontal_vel * 100},${vertical_vel * 100}`);
