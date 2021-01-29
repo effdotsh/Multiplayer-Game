@@ -7,8 +7,8 @@ import {
 import { v4 } from "https://deno.land/std/uuid/mod.ts";
 
 //todo interface
-let canvasX: number = 1000;
-let canvasY: number = 1000;
+let canvasX: number = 2290;
+let canvasY: number = 950;
 
 class Player {
   id = gen_id();
@@ -57,7 +57,7 @@ const dash_time: number = parseInt(Deno.env.get("DASH_TIME") ?? "100");
 
 let movement_speed: number = 5;
 let bullet_speed: number = 15;
-let bullet_despawn: number = 3000;
+let bullet_despawn: number = 5000;
 
 let mssg: GameData = new GameData();
 
@@ -179,10 +179,11 @@ function fire_bullet(
     bullet.x = player.x;
     bullet.y = player.y;
     bullet.angle = bindVector(
-      locs[0] - bullet.x,
-      locs[1] - bullet.y,
+      locs[0],
+      locs[1],
       bullet_speed,
     );
+    console.log(bullet.angle);
     bullet.fired_by = uid;
     mssg.bullets.push(bullet);
 

@@ -13,6 +13,7 @@ let mouse_down = false;
 
 let last_fire = Date.now();
 let last_dash = 0;
+let size_scaler = 1;
 function setup() {
   fill(255);
   textAlign(CENTER, CENTER);
@@ -25,7 +26,11 @@ function setup() {
   };
   const connectionDisplay = document.querySelector(".connections");
 
-  createCanvas(1000, 1000);
+  //scale window
+  size_scaler = windowWidth / 2304;
+  createCanvas(2290 * size_scaler, 950 * size_scaler);
+  scale(size_scaler);
+  console.log(size_scaler);
   ws.addEventListener("message", ({ data }) => {
     const parsed = JSON.parse(data);
     const { type } = parsed;
@@ -66,6 +71,8 @@ function setup() {
 }
 
 function draw() {
+  scale(size_scaler);
+
   if (socket_ready && players_list != undefined) {
     background(0);
 
@@ -106,7 +113,6 @@ function draw() {
             );
           }
           dashing_players.get(p.id).server = p.last_dash;
-          console.log("dash");
           draw_dashing(p);
         }
       }
@@ -121,7 +127,11 @@ function draw() {
 
     ws.send(`pos${horizontal_vel * 100},${vertical_vel * 100}`);
     if (Date.now() - last_fire > fire_rate && mouse_down) {
-      ws.send(`fire${int(mouseX)}, ${int(mouseY)}`);
+      let net_x = mouseX - players_list[this_player].x * size_scaler;
+      let net_y = mouseY - players_list[this_player].y * size_scaler;
+
+      let fire_vel = bindVector(net_x, net_y);
+      ws.send(`fire${(fire_vel[0])}, ${(fire_vel[1])}`);
     }
   }
   get_keys();
@@ -189,8 +199,6 @@ function draw_dashing(player) {
   let moved_y = player.y - player.dash_from_y;
   let new_x = player.dash_from_x + (moved_x * percent_dashed);
   let new_y = player.dash_from_y + (moved_y * percent_dashed);
-
-  console.log(percent_dashed);
 
   circle(new_x, new_y, 50, 50);
   fill(255);
