@@ -11,7 +11,9 @@ let last_fire = Date.now();
 
 function setup() {
   fill(255);
-
+  textAlign(CENTER, CENTER);
+  ellipseMode(CENTER);
+  textSize(16);
   ws.onopen = function (event) {
     socket_ready = true;
     ws.send("wake");
@@ -21,32 +23,42 @@ function setup() {
 
   createCanvas(1000, 1000);
   ws.addEventListener("message", ({ data }) => {
-    try {
-      const parsed = JSON.parse(data);
-      const { type } = parsed;
-      const { info } = parsed;
-      const all = type == "all";
-      if (type === "players" || all) {
-        let players = info;
-        players_list = players;
-        let template = `
+    const parsed = JSON.parse(data);
+    const { type } = parsed;
+    const { info } = parsed;
+    const all = false;
+    if (type === "players" || all) {
+      let players = info;
+      players_list = players;
+      let template = `
             <p>Connections: ${players.length}</p>`;
-        connectionDisplay.innerHTML = template;
-      }
-      if (type === "bullets" || all) {
-        const bullets = info;
-        bullets[0].update_time = Date.now();
-        bullets[0].spawn_time = Date.now();
-
-        bullets_list.push(bullets[0]);
-      }
-      const { you_are } = JSON.parse(data);
-
-      this_player = you_are;
-    } catch {
-      console.log(data);
+      connectionDisplay.innerHTML = template;
     }
+    if (type === "bullets" || all) {
+      const bullets = info;
+      bullets[0].update_time = Date.now();
+      bullets[0].spawn_time = Date.now();
+
+      bullets_list.push(bullets[0]);
+    }
+    if (type === "despawn") {
+      for (let b = 0; b < bullets_list.length; b++) {
+        for (let d = 0; d < info.length; d++) {
+          if (bullets_list[b].id == info[d]) {
+            bullets_list.splice(b, 1);
+          }
+        }
+      }
+    }
+    const { you_are } = JSON.parse(data);
+
+    this_player = you_are;
   });
+
+  window.onunload = function () {
+    ws.close();
+    return null;
+  };
 }
 
 function draw() {
@@ -61,7 +73,13 @@ function draw() {
         fill(41, 167, 240);
       }
       player_counter++;
-      circle(p.x, p.y, 50, 50);
+      if (p.living) {
+        circle(p.x, p.y, 50, 50);
+        fill(255);
+        textAlign(CENTER, CENTER);
+
+        text(p.score, p.x, p.y);
+      }
     }
 
     //iterate spawning bullets

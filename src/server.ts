@@ -1,10 +1,7 @@
-import { serve } from "https://deno.land/std@0.83.0/http/server.ts";
+import { serve } from "https://deno.land/std/http/server.ts";
 
 //allows for websocket
-import {
-  acceptable,
-  acceptWebSocket,
-} from "https://deno.land/std@0.83.0/ws/mod.ts";
+import { acceptable, acceptWebSocket } from "https://deno.land/std/ws/mod.ts";
 
 //Middleware to serve files
 import { Application } from "https://deno.land/x/abc@v1.2.4/mod.ts";
@@ -16,10 +13,8 @@ import { wsManager } from "./wsManager.ts";
 import "https://deno.land/x/dotenv/load.ts";
 
 //Get port from env vars
-// @ts-ignore
-let fire_rate: string = +Deno.env.get("FIRE_RATE") || "200";
-//@ts-ignore
-const PORT: number = +Deno.env.get("PORT") || 8080;
+let fire_rate: string = Deno.env.get("FIRE_RATE") ?? "200";
+const PORT: number = parseInt(Deno.env.get("PORT") ?? "8080");
 const server = serve({ port: PORT });
 const socket_url = Deno.env.get("SOCKET_URL") || `ws://localhost:${PORT}/ws`;
 
@@ -48,10 +43,21 @@ for await (const req of server) {
         body: index_html,
       });
     } else {
-      req.respond({
-        status: 200,
-        body: await Deno.open(`./public${req.url}`),
-      });
+      let status: number;
+      try {
+        let file = await Deno.open(`./public${req.url}`);
+        status = 200;
+        req.respond({
+          status: status,
+          body: file,
+        });
+      } catch (err) {
+        status = 404;
+        req.respond({
+          status: status,
+          body: err,
+        });
+      }
     }
   } else {
     req.respond({
