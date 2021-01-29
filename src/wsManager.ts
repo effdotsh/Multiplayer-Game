@@ -19,7 +19,10 @@ class Player {
   health = 100;
   score = 0;
   living: boolean = true;
+
   last_dash: number = 0;
+  dash_from_x: number = this.x;
+  dash_from_y: number = this.y;
 }
 
 class Bullet {
@@ -47,8 +50,9 @@ class Signal {
 
 const fire_rate: number = parseInt(Deno.env.get("FIRE_RATE") ?? "200");
 const bullet_dmg: number = parseInt(Deno.env.get("BULLET_DMG") ?? "35");
-const dash_cooldown: number = parseInt(Deno.env.get("DASH_COOLDOWN") ?? "5000");
+const dash_cooldown: number = parseInt(Deno.env.get("DASH_COOLDOWN") ?? "1500");
 const dash_distance: number = parseInt(Deno.env.get("DASH_DISTANCE") ?? "50");
+const dash_time: number = parseInt(Deno.env.get("DASH_TIME") ?? "200");
 
 let movement_speed: number = 5;
 let bullet_speed: number = 15;
@@ -257,14 +261,16 @@ const wsManager = async (ws: WebSocket) => {
   }
   for await (const ev of ws) {
     //@ts-ignore
-    let player = sockets.get(uid).player;
+    let player: Player = sockets.get(uid).player;
     if (isWebSocketCloseEvent(ev)) {
       sockets.delete(uid);
     } else if (player != undefined && !ws.isClosed) {
       //delete socket if connection closed
       if (typeof ev === "string") {
         if (ev.includes("pos")) { //Handle player movement
-          updatePositions(uid, ws, player, ev);
+          if (Date.now() - player.last_dash > dash_time) {
+            updatePositions(uid, ws, player, ev);
+          }
         } else if (ev.includes("fire") && player.living) {
           fire_bullet(uid, ws, player, ev);
         } else if (ev.includes("wake")) {
@@ -286,10 +292,13 @@ const wsManager = async (ws: WebSocket) => {
         } else if (ev.includes("dash")) {
           let dash_vel = ev.replace("dash", "pos");
           if (Date.now() - player.last_dash >= dash_cooldown) {
-            updatePositions(uid, ws, player, dash_vel, dash_distance);
+            player.dash_from_x = player.x;
+            player.dash_from_x = player.y;
+            player.last_dash = Date.now();
 
             //@ts-ignore
-            sockets.get(uid).player.last_dash = Date.now();
+            sockets.get(uid).player = player;
+            updatePositions(uid, ws, player, dash_vel, dash_distance);
           }
         }
 
