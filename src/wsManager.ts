@@ -19,6 +19,7 @@ class Player {
   health = 100;
   score = 0;
   living: boolean = true;
+  last_dash: number = 0;
 }
 
 class Bullet {
@@ -44,8 +45,10 @@ class Signal {
   you_are: number = 0;
 }
 
-let fire_rate: number = parseInt(Deno.env.get("FIRE_RATE") ?? "200");
-let bullet_dmg: number = parseInt(Deno.env.get("BULLET_DMG") ?? "35");
+const fire_rate: number = parseInt(Deno.env.get("FIRE_RATE") ?? "200");
+const bullet_dmg: number = parseInt(Deno.env.get("BULLET_DMG") ?? "35");
+const dash_cooldown: number = parseInt(Deno.env.get("DASH_COOLDOWN") ?? "5000");
+const dash_distance: number = parseInt(Deno.env.get("DASH_DISTANCE") ?? "50");
 
 let movement_speed: number = 5;
 let bullet_speed: number = 15;
@@ -111,6 +114,7 @@ function updatePositions(
   ws: WebSocket,
   player: Player,
   ev: string,
+  dash: number = 0,
 ) {
   // Scale player movement to fit spee
   let velocity_input: string[] = ev.split("pos")[1].split(",");
@@ -123,6 +127,10 @@ function updatePositions(
   //move player
   let time_multiplier = (Date.now() - player.updateTime) / 20;
   player.updateTime = Date.now();
+  //dash
+  player.x += dash * velocity[0];
+  player.y += dash * velocity[1];
+
   velocity[0] *= time_multiplier;
   velocity[1] *= time_multiplier;
   player.x += velocity[0];
@@ -274,6 +282,14 @@ const wsManager = async (ws: WebSocket) => {
             }
           } else {
             sockets.delete(uid);
+          }
+        } else if (ev.includes("dash")) {
+          let dash_vel = ev.replace("dash", "pos");
+          if (Date.now() - player.last_dash >= dash_cooldown) {
+            updatePositions(uid, ws, player, dash_vel, dash_distance);
+
+            //@ts-ignore
+            sockets.get(uid).player.last_dash = Date.now();
           }
         }
 

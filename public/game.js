@@ -100,16 +100,16 @@ function draw() {
 function get_keys() {
   vertical_vel = 0;
   horizontal_vel = 0;
-  if (keyIsDown(87)) {
+  if (keyIsDown(87)) { // W
     vertical_vel -= 1;
   }
-  if (keyIsDown(83)) {
+  if (keyIsDown(83)) { // S
     vertical_vel += 1;
   }
-  if (keyIsDown(65)) {
+  if (keyIsDown(65)) { // A
     horizontal_vel -= 1;
   }
-  if (keyIsDown(68)) {
+  if (keyIsDown(68)) { // D
     horizontal_vel += 1;
   }
 }
@@ -119,4 +119,13 @@ function mousePressed() {
 }
 function mouseReleased() {
   mouse_down = false;
+}
+
+function keyPressed() {
+  if (keyCode === 16 || keyCode === 32) {
+    dash();
+  }
+}
+function dash() {
+  ws.send(`dash${horizontal_vel * 100},${vertical_vel * 100}`);
 }
