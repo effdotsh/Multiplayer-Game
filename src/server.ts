@@ -15,6 +15,9 @@ import "https://deno.land/x/dotenv/load.ts";
 //Get port from env vars
 let fire_rate: string = Deno.env.get("FIRE_RATE") ?? "200";
 const PORT: number = parseInt(Deno.env.get("PORT") ?? "8080");
+const dash_cooldown: string = (Deno.env.get("DASH_COOLDOWN") ?? "1500");
+const dash_time: string = (Deno.env.get("DASH_TIME") ?? "100");
+
 const server = serve({ port: PORT });
 const socket_url = Deno.env.get("SOCKET_URL") || `ws://localhost:${PORT}/ws`;
 
@@ -23,7 +26,9 @@ const index_html = await decoder.decode(
   await Deno.readFile("./public/index.html"),
 )
   .replace("%SOCKET_URL%", socket_url)
-  .replace("%FIRE_RATE%", fire_rate);
+  .replace("%FIRE_RATE%", fire_rate)
+  .replace("%DASH_COOLDOWN%", dash_cooldown)
+  .replace("%DASH_TIME%", dash_time);
 console.log(socket_url);
 console.log(`http://localhost:${PORT}`);
 for await (const req of server) {

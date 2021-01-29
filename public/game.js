@@ -7,8 +7,9 @@ let vertical_vel = 0;
 let horizontal_vel = 0;
 
 let mouse_down = false;
-let last_fire = Date.now();
 
+let last_fire = Date.now();
+let last_dash = 0;
 function setup() {
   fill(255);
   textAlign(CENTER, CENTER);
@@ -74,18 +75,25 @@ function draw() {
       }
       player_counter++;
       if (p.living) {
-        circle(p.x, p.y, 50, 50);
-        fill(255);
-        textAlign(CENTER, CENTER);
+        if (Date.now() - p.last_dash > dash_time) {
+          circle(p.x, p.y, 50, 50);
+          fill(255);
+          textAlign(CENTER, CENTER);
 
-        text(p.score, p.x, p.y);
+          text(p.score, p.x, p.y);
+          rectMode(CORNER);
+          fill(0, 200, 0);
+          rect(p.x - 25, p.y - 40, p.health / 100 * 50, 10);
+        } else {
+          draw_dashing(p);
+        }
       }
     }
 
     //iterate spawning bullets
+    fill(252, 186, 3);
     bullets_list = move_bullets(bullets_list);
     for (b of bullets_list) {
-      fill(0, 200, 0);
       circle(b.x, b.y, 25, 25);
     }
 
@@ -95,21 +103,36 @@ function draw() {
     }
   }
   get_keys();
+
+  //draw dash_cooldown bar
+  let bar_width = 200;
+  let bar_height = 30;
+
+  fill(200);
+  rect(8.5, 8.5, bar_width + 5, bar_height + 5);
+  fill(50, 50, 200);
+
+  let cooldown = (Date.now() - last_dash) / dash_cooldown;
+  cooldown = cooldown > 1 ? cooldown = 1 : cooldown = cooldown;
+  if (cooldown == 1) {
+    fill(41, 167, 240);
+  }
+  rect(10, 10, cooldown * bar_width, bar_height);
 }
 
 function get_keys() {
   vertical_vel = 0;
   horizontal_vel = 0;
-  if (keyIsDown(87)) {
+  if (keyIsDown(87)) { // W
     vertical_vel -= 1;
   }
-  if (keyIsDown(83)) {
+  if (keyIsDown(83)) { // S
     vertical_vel += 1;
   }
-  if (keyIsDown(65)) {
+  if (keyIsDown(65)) { // A
     horizontal_vel -= 1;
   }
-  if (keyIsDown(68)) {
+  if (keyIsDown(68)) { // D
     horizontal_vel += 1;
   }
 }
@@ -119,4 +142,47 @@ function mousePressed() {
 }
 function mouseReleased() {
   mouse_down = false;
+}
+
+function keyPressed() {
+  if (keyCode === 16 || keyCode === 32) {
+    dash();
+  }
+}
+function dash() {
+  let cooldown = (Date.now() - last_dash) / dash_cooldown;
+  cooldown = cooldown > 1 ? cooldown = 1 : cooldown = cooldown;
+  if (cooldown == 1) {
+    last_dash = Date.now();
+
+    ws.send(`dash${horizontal_vel * 100},${vertical_vel * 100}`);
+  }
+}
+
+function draw_dashing(player) {
+  let percent_dashed = (Date.now() - player.last_dash) / dash_time;
+  percent_dashed = easeInOutSine(percent_dashed);
+  let moved_x = player.x - player.dash_from_x;
+  let moved_y = player.y - player.dash_from_y;
+  let new_x = player.dash_from_x + (moved_x * percent_dashed);
+  let new_y = player.dash_from_y + (moved_y * percent_dashed);
+
+  console.log(percent_dashed);
+
+  circle(new_x, new_y, 50, 50);
+  fill(255);
+  textAlign(CENTER, CENTER);
+
+  text(player.score, new_x, new_y);
+  rectMode(CORNER);
+  fill(0, 200, 0);
+  rect(new_x - 25, new_y - 40, player.health / 100 * 50, 10);
+
+  fill(255);
+  // circle(player.x, player.y, 50, 50);
+  // circle(player.dash_from_x, player.dash_from_y, 50, 50);
+}
+
+function easeInOutSine(x) {
+  return -(cos(PI * x) - 1) / 2;
 }

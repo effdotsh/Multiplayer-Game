@@ -19,6 +19,10 @@ class Player {
   health = 100;
   score = 0;
   living: boolean = true;
+
+  last_dash: number = 0;
+  dash_from_x: number = 0;
+  dash_from_y: number = 0;
 }
 
 class Bullet {
@@ -44,8 +48,11 @@ class Signal {
   you_are: number = 0;
 }
 
-let fire_rate: number = parseInt(Deno.env.get("FIRE_RATE") ?? "200");
-let bullet_dmg: number = parseInt(Deno.env.get("BULLET_DMG") ?? "35");
+const fire_rate: number = parseInt(Deno.env.get("FIRE_RATE") ?? "200");
+const bullet_dmg: number = parseInt(Deno.env.get("BULLET_DMG") ?? "35");
+const dash_cooldown: number = parseInt(Deno.env.get("DASH_COOLDOWN") ?? "1500");
+const dash_distance: number = parseInt(Deno.env.get("DASH_DISTANCE") ?? "50");
+const dash_time: number = parseInt(Deno.env.get("DASH_TIME") ?? "100");
 
 let movement_speed: number = 5;
 let bullet_speed: number = 15;
@@ -111,6 +118,7 @@ function updatePositions(
   ws: WebSocket,
   player: Player,
   ev: string,
+  dash: number = 0,
 ) {
   // Scale player movement to fit spee
   let velocity_input: string[] = ev.split("pos")[1].split(",");
@@ -123,6 +131,10 @@ function updatePositions(
   //move player
   let time_multiplier = (Date.now() - player.updateTime) / 20;
   player.updateTime = Date.now();
+  //dash
+  player.x += dash * velocity[0];
+  player.y += dash * velocity[1];
+
   velocity[0] *= time_multiplier;
   velocity[1] *= time_multiplier;
   player.x += velocity[0];
@@ -198,7 +210,7 @@ function check_collisions(
         bullet_trash.push(bullet.id);
 
         let hit = users.get(uid);
-        if (hit != undefined) {
+        if (hit != undefined && Date.now() - hit.player.last_dash > dash_time) {
           let dmg = dealDamage(hit.player);
           hit.player = dmg.player;
           if (dmg.killed) {
@@ -219,15 +231,6 @@ function check_collisions(
       }
     }
   }
-
-  // hit_list.forEach((target) => {
-  //   let hit = users.get(target);
-  //   if (hit != undefined) {
-  //     // hit.player.living = false;
-  //     hit.player = dealDamage(hit.player);
-  //   }
-  // });
-
   return { users: users, bullets: bullets, bullet_trash: bullet_trash };
 }
 function dealDamage(player: Player): { player: Player; killed: boolean } {
@@ -249,14 +252,16 @@ const wsManager = async (ws: WebSocket) => {
   }
   for await (const ev of ws) {
     //@ts-ignore
-    let player = sockets.get(uid).player;
+    let player: Player = sockets.get(uid).player;
     if (isWebSocketCloseEvent(ev)) {
       sockets.delete(uid);
     } else if (player != undefined && !ws.isClosed) {
       //delete socket if connection closed
       if (typeof ev === "string") {
         if (ev.includes("pos")) { //Handle player movement
-          updatePositions(uid, ws, player, ev);
+          if (Date.now() - player.last_dash > dash_time) {
+            updatePositions(uid, ws, player, ev);
+          }
         } else if (ev.includes("fire") && player.living) {
           fire_bullet(uid, ws, player, ev);
         } else if (ev.includes("wake")) {
@@ -274,6 +279,18 @@ const wsManager = async (ws: WebSocket) => {
             }
           } else {
             sockets.delete(uid);
+          }
+        } else if (ev.includes("dash")) {
+          let dash_vel = ev.replace("dash", "pos");
+          if (Date.now() - player.last_dash >= dash_cooldown) {
+            player.dash_from_x = player.x;
+
+            player.dash_from_y = player.y;
+            player.last_dash = Date.now();
+
+            //@ts-ignore
+            sockets.get(uid).player = player;
+            updatePositions(uid, ws, player, dash_vel, dash_distance);
           }
         }
 

@@ -18,8 +18,12 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.min.js"></script>
-    <script>let ws = new WebSocket('%SOCKET_URL%')
-        let fire_rate = parseFloat("%FIRE_RATE%");
+    <script>
+        let ws = new WebSocket('%SOCKET_URL%')
+        const fire_rate = parseFloat("%FIRE_RATE%");
+        let dash_cooldown = ("%DASH_COOLDOWN%")
+        let dash_time = ("%DASH_TIME%")
+
     </script>
     <script src="bullet.js"></script>
 
