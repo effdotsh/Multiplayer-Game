@@ -161,7 +161,7 @@ function dash() {
 
 function draw_dashing(player) {
   let percent_dashed = (Date.now() - player.last_dash) / dash_time;
-  percent_dashed = easeInOutSine(percent_dashed);
+  percent_dashed = (percent_dashed);
   let moved_x = player.x - player.dash_from_x;
   let moved_y = player.y - player.dash_from_y;
   let new_x = player.dash_from_x + (moved_x * percent_dashed);
