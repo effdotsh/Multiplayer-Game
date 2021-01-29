@@ -14,6 +14,10 @@ let mouse_down = false;
 let last_fire = Date.now();
 let last_dash = 0;
 let size_scaler = 1;
+
+let canvasX = 2290;
+let canvasY = 950;
+
 function setup() {
   fill(255);
   textAlign(CENTER, CENTER);
@@ -137,11 +141,16 @@ function draw() {
   get_keys();
 
   //draw dash_cooldown bar
-  let bar_width = 200;
+  let bar_width = 800;
   let bar_height = 30;
 
   fill(200);
-  rect(8.5, 8.5, bar_width + 5, bar_height + 5);
+  rect(
+    canvasX / 2 - bar_width / 2,
+    canvasY - 2 * bar_height,
+    bar_width + 5,
+    bar_height + 5,
+  );
   fill(50, 50, 200);
 
   let cooldown = (Date.now() - last_dash) / dash_cooldown;
@@ -149,7 +158,12 @@ function draw() {
   if (cooldown == 1) {
     fill(41, 167, 240);
   }
-  rect(10, 10, cooldown * bar_width, bar_height);
+  rect(
+    canvasX / 2 - bar_width / 2 + 2.5,
+    canvasY - 2 * bar_height + 2.5,
+    cooldown * bar_width,
+    bar_height,
+  );
 }
 
 function get_keys() {
