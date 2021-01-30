@@ -11,6 +11,7 @@ let canvasY: number = 950;
 
 class Player {
   id = gen_id();
+  name: string = "";
   x: number = Math.floor(Math.random() * canvasX);
   y: number = Math.floor(Math.random() * canvasY);
   failed_pings: number = 0;
@@ -258,7 +259,15 @@ const wsManager = async (ws: WebSocket) => {
     } else if (player != undefined && !ws.isClosed) {
       //delete socket if connection closed
       if (typeof ev === "string") {
-        if (ev.includes("pos")) { //Handle player movement
+        if (ev.includes("name")) {
+          if (ev.length <= 12) {
+            let wordList = await fetch(
+              "https://raw.githubusercontent.com/words/cuss/master/index.json",
+            );
+            //@ts-ignore
+            sockets.get(uid).player.name = ev.slice(4);
+          }
+        } else if (ev.includes("pos")) { //Handle player movement
           if (Date.now() - player.last_dash > dash_time) {
             updatePositions(uid, ws, player, ev);
           }

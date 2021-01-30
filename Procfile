@@ -1,1 +1,1 @@
-web: deno run --allow-net --allow-env --allow-read src/server.ts
+web: deno run --unstable --allow-net --allow-env --allow-read src/server.ts

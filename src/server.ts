@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std/http/server.ts";
-
+import { existsSync } from "https://deno.land/std/fs/mod.ts";
 //allows for websocket
 import { acceptable, acceptWebSocket } from "https://deno.land/std/ws/mod.ts";
 
@@ -49,18 +49,18 @@ for await (const req of server) {
       });
     } else {
       let status: number;
-      try {
+      if (existsSync(`./public${req.url}`)) {
         let file = await Deno.open(`./public${req.url}`);
         status = 200;
         req.respond({
           status: status,
           body: file,
         });
-      } catch (err) {
+      } else {
         status = 404;
         req.respond({
           status: status,
-          body: err,
+          body: "file not found",
         });
       }
     }

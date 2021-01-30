@@ -9,21 +9,40 @@
     <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
     <link rel="manifest" href="favicon/site.webmanifest">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 
 <body>
     <h1>Multiplayer Test</h1>
+
     <div class="connections">
-        <p>Loading...</p>
+        <p></p>
     </div>
+
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.min.js"></script>
     <script>
-        let ws = new WebSocket('%SOCKET_URL%')
+        var socket_url = ("%SOCKET_URL%")
         const fire_rate = parseFloat("%FIRE_RATE%");
-        let dash_cooldown = ("%DASH_COOLDOWN%")
-        let dash_time = ("%DASH_TIME%")
+        var dash_cooldown = ("%DASH_COOLDOWN%");
+        var dash_time = ("%DASH_TIME%");
+        var name = '';
+        var name_selected = false;
+        var socket_ready = false;
+        const connectionDisplay = document.querySelector(".connections");
 
+        $(document).on("keydown", function (e) {
+            if (e.which === 8) {
+                e.preventDefault();
+                name = name.slice(0, -1);
+            }
+            if (e.which === 13) {
+                if (socket_ready) {
+                    name_selected = true;
+                    ws.send(`name${name}`);
+                }
+            }
+        });
     </script>
     <script src="bullet.js"></script>
     <script src="bind_vector.js"></script>
