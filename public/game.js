@@ -38,6 +38,8 @@ function setup() {
 }
 
 function draw() {
+  textSize(20);
+
   scale(size_scaler);
 
   if (socket_ready && name_selected) {
@@ -55,7 +57,7 @@ function draw() {
         if (dashing_players.get(p.id) == undefined) {
           dashing_players.set(
             p.id,
-            { client: Date.now(), server: p.last_dash },
+            { client: 0, server: p.last_dash },
           );
         }
         let last_recorded_dash = dashing_players.get(p.id)?.server ?? 0;
@@ -67,12 +69,12 @@ function draw() {
           circle(p.x, p.y, 50, 50);
           fill(255);
           textAlign(CENTER, CENTER);
-          textSize(20);
           text(p.score, p.x, p.y - 3);
           text(p.name, p.x, p.y + 40);
           rectMode(CORNER);
           fill(0, 200, 0);
           rect(p.x - 25, p.y - 40, p.health / 100 * 50, 10);
+          cooldown_bar(p.x, p.y);
         } else {
           if (last_recorded_dash != p.last_dash) {
             dashing_players.set(
@@ -102,12 +104,12 @@ function draw() {
       let fire_vel = bindVector(net_x, net_y);
       send_signal(`fire${(fire_vel[0])}, ${(fire_vel[1])}`);
     }
+    draw_leaderboard(players_list);
   } else if (!name_selected && socket_ready) {
     send_signal(`name${name}`);
     name_selected = true;
   }
   get_keys();
-  cooldown_bar();
   if (!name_selected) {
     fill(255);
     textSize(100);
@@ -122,9 +124,9 @@ function namescreen() {
   image(name_box, canvasX / 2, canvasY / 2 + 100, 1000, 200);
   textAlign(CENTER, CENTER);
 
-  text(name, canvasX / 2, canvasY / 2 + 100);
+  text(name, canvasX / 2, canvasY / 2 + 87);
 }
-function cooldown_bar() {
+function cooldown_bar(x = player.x, y = player.y) {
   //draw dash_cooldown bar
   let bar_width = 50;
   let bar_height = 10;
@@ -137,8 +139,8 @@ function cooldown_bar() {
   let player = players_list[this_player];
   if (cooldown != 1) {
     rect(
-      player.x - bar_width / 2,
-      player.y - 50,
+      x - bar_width / 2,
+      y - 50,
       cooldown * bar_width,
       bar_height,
     );
@@ -208,15 +210,19 @@ function draw_dashing(player) {
   let new_y = player.dash_from_y + (moved_y * percent_dashed);
 
   circle(new_x, new_y, 50, 50);
-  fill(255);
-  textAlign(CENTER, CENTER);
 
-  text(player.score, new_x, new_y);
   rectMode(CORNER);
   fill(0, 200, 0);
   rect(new_x - 25, new_y - 40, player.health / 100 * 50, 10);
-
   fill(255);
+  textAlign(CENTER, CENTER);
+
+  text(player.score, new_x, new_y - 3);
+  text(player.name, new_x, new_y + 40);
+
+  if (player.id == players_list[this_player].id) {
+    cooldown_bar(new_x, new_y);
+  }
 }
 
 function easeInOutSine(x) {
@@ -271,4 +277,7 @@ function send_signal(signal) {
   if (ws != undefined) {
     ws.send(signal);
   }
+}
+
+function draw_leaderboard(players_list) {
 }

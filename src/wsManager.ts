@@ -5,6 +5,7 @@ import {
   WebSocketEvent,
 } from "https://deno.land/std/ws/mod.ts";
 import { v4 } from "https://deno.land/std/uuid/mod.ts";
+import "https://deno.land/x/dotenv/load.ts";
 
 let canvasX: number = 2290;
 let canvasY: number = 950;
@@ -49,15 +50,16 @@ class Signal {
   you_are: number = 0;
 }
 
-const fire_rate: number = parseInt(Deno.env.get("FIRE_RATE") ?? "200");
+const fire_rate: number = parseInt(Deno.env.get("FIRE_RATE") ?? "400");
 const bullet_dmg: number = parseInt(Deno.env.get("BULLET_DMG") ?? "35");
-const dash_cooldown: number = parseInt(Deno.env.get("DASH_COOLDOWN") ?? "1500");
+const dash_cooldown: number = parseInt(Deno.env.get("DASH_COOLDOWN") ?? "1000");
 const dash_distance: number = parseInt(Deno.env.get("DASH_DISTANCE") ?? "50");
-const dash_time: number = parseInt(Deno.env.get("DASH_TIME") ?? "100");
-
-let movement_speed: number = 5;
-let bullet_speed: number = 15;
-let bullet_despawn: number = 5000;
+const dash_time: number = parseInt(Deno.env.get("DASH_TIME") ?? "150");
+const movement_speed: number = parseInt(Deno.env.get("PLAYER_SPEED") ?? "5");
+const bullet_speed: number = parseInt(Deno.env.get("BULLET_SPEED") ?? "15");
+const bullet_despawn: number = parseInt(
+  Deno.env.get("BULLET_DESPAWN") ?? "5000",
+);
 
 let mssg: GameData = new GameData();
 
@@ -300,6 +302,8 @@ const wsManager = async (ws: WebSocket) => {
             //@ts-ignore
             sockets.get(uid).player = player;
             updatePositions(uid, ws, player, dash_vel, dash_distance);
+            //@ts-ignore
+            sockets.get(uid).player.updateTime = Date.now() + dash_time;
           }
         }
 

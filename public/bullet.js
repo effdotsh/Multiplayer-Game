@@ -1,4 +1,3 @@
-let bullet_despawn = 3000;
 function move_bullets(bullets) {
   if (bullets != []) {
     let bullet_counter = 0;
