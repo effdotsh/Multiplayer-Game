@@ -76,7 +76,9 @@ function draw() {
           rectMode(CORNER);
           fill(0, 200, 0);
           rect(p.x - 25, p.y - 40, p.health / 100 * 50, 10);
-          cooldown_bar(p.x, p.y);
+          if (p.id == players_list[this_player].id) {
+            cooldown_bar(p.x, p.y);
+          }
         } else {
           if (last_recorded_dash != p.last_dash) {
             dashing_players.set(
@@ -106,7 +108,7 @@ function draw() {
       let fire_vel = bindVector(net_x, net_y);
       send_signal(`fire${(fire_vel[0])}, ${(fire_vel[1])}`);
     }
-    draw_leaderboard(players_list);
+    draw_leaderboard(JSON.parse(JSON.stringify(players_list)));
   } else if (!name_selected && socket_ready) {
     send_signal(`name${name}`);
     name_selected = true;
@@ -128,7 +130,7 @@ function namescreen() {
 
   text(name, canvasX / 2, canvasY / 2 + 87);
 }
-function cooldown_bar(x = player.x, y = player.y) {
+function cooldown_bar(x, y) {
   //draw dash_cooldown bar
   let bar_width = 50;
   let bar_height = 10;
@@ -281,15 +283,18 @@ function send_signal(signal) {
   }
 }
 
-function draw_leaderboard(players_list) {
+function draw_leaderboard(players) {
   textAlign(LEFT);
-  fill(255);
   textSize(30);
-  players_list.sort((a, b) =>
+  players.sort((a, b) =>
     (a.score > b.score) ? 1 : ((b.score > a.score) ? -1 : 0)
   ).reverse();
-  let max_name_len = 11;
-  players_list.forEach((player, rank) => {
+  players.forEach((player, rank) => {
+    fill(255);
+    if (player.id === players_list[this_player].id) {
+      fill(0, 162, 255);
+      console.log(this_player);
+    }
     text(
       `${rank + 1}. ${player.name}`,
       50,
