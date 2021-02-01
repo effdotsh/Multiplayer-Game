@@ -15,6 +15,8 @@ class Player {
   name: string = "";
   x: number = Math.floor(Math.random() * canvasX);
   y: number = Math.floor(Math.random() * canvasY);
+  vel_x: number = 0;
+  ve_y: number = 0;
   failed_pings: number = 0;
   last_fired: number = Date.now();
   updateTime: number = Date.now();
@@ -176,8 +178,7 @@ function fire_bullet(
     let locs_str: string[] = ev.split("fire")[1].split(", ");
     let locs: number[] = [+locs_str[0], +locs_str[1]];
     let bullet: Bullet = new Bullet();
-    // @ts-ignore
-    let player = sockets.get(uid).player;
+    //  player = sockets.get(uid).player;
     bullet.x = player.x;
     bullet.y = player.y;
     bullet.angle = bindVector(
@@ -258,18 +259,18 @@ const wsManager = async (ws: WebSocket) => {
   for await (const ev of ws) {
     //@ts-ignore
     let player: Player = sockets.get(uid).player;
+
     if (isWebSocketCloseEvent(ev)) {
       sockets.delete(uid);
     } else if (player != undefined && !ws.isClosed) {
       //delete socket if connection closed
       if (typeof ev === "string") {
-        if (ev.includes("name")) {
+        if (ev.slice(0, 5).includes("name")) {
           if (ev.length <= 12) {
             let wordList = await fetch(
               "https://raw.githubusercontent.com/words/cuss/master/index.json",
             );
-            //@ts-ignore
-            sockets.get(uid).player.name = ev.slice(4);
+            player.name = ev.slice(4);
           }
         } else if (ev.includes("pos")) { //Handle player movement
           if (Date.now() - player.last_dash > dash_time) {
@@ -303,11 +304,8 @@ const wsManager = async (ws: WebSocket) => {
             player.dash_from_y = player.y;
             player.last_dash = Date.now();
 
-            //@ts-ignore
-            sockets.get(uid).player = player;
             updatePositions(uid, ws, player, dash_vel, dash_distance);
-            //@ts-ignore
-            sockets.get(uid).player.updateTime = Date.now() + dash_time;
+            player.updateTime = Date.now() + dash_time;
           }
         }
 
