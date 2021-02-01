@@ -38,6 +38,8 @@ function setup() {
 }
 
 function draw() {
+  textFont(aviera_sans);
+
   textSize(20);
 
   scale(size_scaler);
@@ -280,4 +282,23 @@ function send_signal(signal) {
 }
 
 function draw_leaderboard(players_list) {
+  textAlign(LEFT);
+  fill(255);
+  textSize(30);
+  players_list.sort((a, b) =>
+    (a.score > b.score) ? 1 : ((b.score > a.score) ? -1 : 0)
+  ).reverse();
+  let max_name_len = 11;
+  players_list.forEach((player, rank) => {
+    text(
+      `${rank + 1}. ${player.name}`,
+      50,
+      50 + 40 * rank,
+    );
+    text(
+      `${int(player.score)}`,
+      220,
+      50 + 40 * rank,
+    );
+  });
 }
