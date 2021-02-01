@@ -276,7 +276,9 @@ const wsManager = async (ws: WebSocket) => {
             updatePositions(uid, ws, player, ev);
           }
         } else if (ev.includes("fire") && player.living) {
-          fire_bullet(uid, ws, player, ev);
+          if (Date.now() - player.last_dash > dash_time) {
+            fire_bullet(uid, ws, player, ev);
+          }
         } else if (ev.includes("wake")) {
           if (!ws.isClosed) {
             try {
