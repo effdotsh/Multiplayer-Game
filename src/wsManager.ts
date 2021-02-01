@@ -216,6 +216,8 @@ function check_collisions(
         if (hit != undefined && Date.now() - hit.player.last_dash > dash_time) {
           let dmg = dealDamage(hit.player);
           hit.player = dmg.player;
+          //@ts-ignore
+          users.get(bullet.fired_by).player.score += 0.5;
           if (dmg.killed) {
             let shooter = users.get(bullet.fired_by)?.player;
             if (shooter != undefined) {
@@ -244,7 +246,7 @@ function dealDamage(player: Player): { player: Player; killed: boolean } {
     player.health = 100;
     player.x = Math.floor(Math.random() * canvasX);
     player.y = Math.floor(Math.random() * canvasY);
-    player.score = Math.round(player.score - player.score / 5);
+    player.score = Math.max(0, player.score - 1);
   }
   return { player: player, killed: killed };
 }

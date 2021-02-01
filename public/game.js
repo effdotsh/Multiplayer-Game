@@ -69,7 +69,7 @@ function draw() {
           circle(p.x, p.y, 50, 50);
           fill(255);
           textAlign(CENTER, CENTER);
-          text(p.score, p.x, p.y - 3);
+          text(Math.floor(p.score), p.x, p.y - 3);
           text(p.name, p.x, p.y + 40);
           rectMode(CORNER);
           fill(0, 200, 0);
@@ -217,7 +217,7 @@ function draw_dashing(player) {
   fill(255);
   textAlign(CENTER, CENTER);
 
-  text(player.score, new_x, new_y - 3);
+  text(Math.floor(player.score), new_x, new_y - 3);
   text(player.name, new_x, new_y + 40);
 
   if (player.id == players_list[this_player].id) {
