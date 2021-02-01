@@ -59,6 +59,7 @@ function draw() {
       }
       player_counter++;
       if (p.living) {
+        console.log(p.vel_y);
         move_player(p);
         draw_player(p);
       }
@@ -212,7 +213,7 @@ function init_socket() {
   ws.onopen = function (event) {
     socket_ready = true;
     send_signal("wake");
-    send_signal(`pos0,0`);
+    send_signal(`vel0,0`);
   };
   ws.addEventListener("message", ({ data }) => {
     const parsed = JSON.parse(data);
@@ -282,10 +283,9 @@ function send_pos() {
   if (
     horizontal_vel != last_horizontal_vel || vertical_vel != last_vertical_vel
   ) {
-    send_signal(`pos${horizontal_vel * 100},${vertical_vel * 100}`);
+    send_signal(`vel${horizontal_vel * 100},${vertical_vel * 100}`);
     last_vertical_vel = vertical_vel;
     last_horizontal_vel = horizontal_vel;
-    console.log(horizontal_vel);
   }
 }
 function draw_player(p) {

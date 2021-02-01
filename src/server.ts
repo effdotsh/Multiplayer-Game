@@ -8,9 +8,10 @@ import { Application } from "https://deno.land/x/abc@v1.2.4/mod.ts";
 const app = new Application();
 
 //custom file handle all websocket reqs
-import { wsManager } from "./wsManager.ts";
+import { pos, wsManager } from "./wsManager.ts";
 
 import "https://deno.land/x/dotenv/load.ts";
+import { isPosixPathSeparator } from "https://deno.land/std@0.85.0/path/_util.ts";
 
 //Get port from env vars
 let fire_rate: string = Deno.env.get("FIRE_RATE") ?? "400";
@@ -25,6 +26,7 @@ const server = serve({ port: PORT });
 const socket_url = Deno.env.get("SOCKET_URL") || `ws://localhost:${PORT}/ws`;
 
 const decoder = new TextDecoder("utf-8");
+
 const index_html = await decoder.decode(
   await Deno.readFile("./public/index.html"),
 )
@@ -34,8 +36,10 @@ const index_html = await decoder.decode(
   .replace("%DASH_TIME%", dash_time)
   .replace("%BULLET_DESPAWN%", bullet_despawn)
   .replace("%MOVE_SPEED%", movement_speed);
+
 console.log(socket_url);
 console.log(`http://localhost:${PORT}`);
+
 for await (const req of server) {
   if (req.url === "/ws") {
     if (acceptable(req)) {

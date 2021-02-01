@@ -16,7 +16,7 @@ class Player {
   x: number = Math.floor(Math.random() * canvasX);
   y: number = Math.floor(Math.random() * canvasY);
   vel_x: number = 0;
-  ve_y: number = 0;
+  vel_y: number = 0;
   failed_pings: number = 0;
   last_fired: number = Date.now();
   updateTime: number = Date.now();
@@ -122,17 +122,9 @@ function updatePositions(
   uid: string,
   ws: WebSocket,
   player: Player,
-  ev: string,
   dash: number = 0,
 ) {
-  // Scale player movement to fit spee
-  let velocity_input: string[] = ev.split("pos")[1].split(",");
-  let velocity: number[] = bindVector(
-    +velocity_input[0],
-    +velocity_input[1],
-    movement_speed,
-  );
-
+  let velocity = [player.vel_x, player.vel_y];
   //move player
   let time_multiplier = (Date.now() - player.updateTime) / 20;
   player.updateTime = Date.now();
@@ -157,6 +149,25 @@ function updatePositions(
     : player.y = player.y;
 
   sockets.set(uid, { socket: ws, player: player });
+}
+function updateVelocity(
+  uid: string,
+  ws: WebSocket,
+  player: Player,
+  ev: string,
+  dash: number = 0,
+) {
+  // Scale player movement to fit spee
+  let velocity_input: string[] = ev.split("vel")[1].split(",");
+  let velocity: number[] = bindVector(
+    +velocity_input[0],
+    +velocity_input[1],
+    movement_speed,
+  );
+
+  player.vel_x = velocity[0];
+  player.vel_y = velocity[1];
+  sockets.set(uid, { socket: ws, player: player });
 
   //tell players about the movement
   mssg.players = updateMssg();
@@ -165,7 +176,6 @@ function updatePositions(
   small_mssg.type = "players";
   tellPlayers(small_mssg);
 }
-
 function fire_bullet(
   uid: string,
   ws: WebSocket,
@@ -272,9 +282,9 @@ const wsManager = async (ws: WebSocket) => {
             );
             player.name = ev.slice(4);
           }
-        } else if (ev.includes("pos")) { //Handle player movement
+        } else if (ev.includes("vel")) { //Handle player movement
           if (Date.now() - player.last_dash > dash_time) {
-            updatePositions(uid, ws, player, ev);
+            updateVelocity(uid, ws, player, ev);
           }
         } else if (ev.includes("fire") && player.living) {
           if (Date.now() - player.last_dash > dash_time) {
@@ -304,7 +314,7 @@ const wsManager = async (ws: WebSocket) => {
             player.dash_from_y = player.y;
             player.last_dash = Date.now();
 
-            updatePositions(uid, ws, player, dash_vel, dash_distance);
+            updatePositions(uid, ws, player, dash_distance);
             player.updateTime = Date.now() + dash_time;
           }
         }
@@ -342,5 +352,10 @@ const wsManager = async (ws: WebSocket) => {
     }
   }
 };
-
-export { wsManager };
+async function game_background() {
+  sockets.forEach((user, uid) => {
+    updatePositions(uid, user.socket, user.player);
+    console.log(user.player.vel_x);
+  });
+}
+export { pos, wsManager };
