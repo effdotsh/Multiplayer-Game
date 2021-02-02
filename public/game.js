@@ -2,11 +2,14 @@ var players_list = [];
 var bullets_list = [];
 
 var dashing_players = new Map();
+var moving_players = new Map();
 
 var this_player = 0;
 
-let vertical_vel = 0;
-let horizontal_vel = 0;
+let vertical_vel;
+let horizontal_vel;
+let last_vertical_vel;
+let last_horizontal_vel;
 
 let mouse_down = false;
 
@@ -56,40 +59,8 @@ function draw() {
       }
       player_counter++;
       if (p.living) {
-        if (dashing_players.get(p.id) == undefined) {
-          dashing_players.set(
-            p.id,
-            { client: 0, server: p.last_dash },
-          );
-        }
-        let last_recorded_dash = dashing_players.get(p.id)?.server ?? 0;
-
-        if (
-          last_recorded_dash == p.last_dash &&
-          Date.now() - dashing_players.get(p.id).client > dash_time
-        ) {
-          circle(p.x, p.y, 50, 50);
-          fill(255);
-          textAlign(CENTER, CENTER);
-          text(Math.floor(p.score), p.x, p.y - 3);
-          text(p.name, p.x, p.y + 40);
-          rectMode(CORNER);
-          fill(0, 200, 0);
-          rect(p.x - 25, p.y - 40, p.health / 100 * 50, 10);
-          if (p.id == players_list[this_player].id) {
-            cooldown_bar(p.x, p.y);
-          }
-        } else {
-          if (last_recorded_dash != p.last_dash) {
-            dashing_players.set(
-              p.id,
-              { client: Date.now(), server: p.last_dash },
-            );
-          }
-          dashing_players.get(p.id).server = p.last_dash;
-
-          draw_dashing(p);
-        }
+        console.log(p.vel_y);
+        draw_player(p);
       }
     }
 
@@ -100,7 +71,6 @@ function draw() {
       circle(b.x, b.y, 25, 25);
     }
 
-    send_signal(`pos${horizontal_vel * 100},${vertical_vel * 100}`);
     if (Date.now() - last_fire > fire_rate && mouse_down) {
       let net_x = mouseX - players_list[this_player].x * size_scaler;
       let net_y = mouseY - players_list[this_player].y * size_scaler;
@@ -108,6 +78,8 @@ function draw() {
       let fire_vel = bindVector(net_x, net_y);
       send_signal(`fire${(fire_vel[0])}, ${(fire_vel[1])}`);
     }
+    send_pos();
+
     draw_leaderboard(JSON.parse(JSON.stringify(players_list)));
   } else if (!name_selected && socket_ready) {
     send_signal(`name${name}`);
@@ -241,7 +213,7 @@ function init_socket() {
   ws.onopen = function (event) {
     socket_ready = true;
     send_signal("wake");
-    send_signal(`pos0,0`);
+    send_signal(`vel0,0`);
   };
   ws.addEventListener("message", ({ data }) => {
     const parsed = JSON.parse(data);
@@ -293,7 +265,6 @@ function draw_leaderboard(players) {
     fill(255);
     if (player.id === players_list[this_player].id) {
       fill(0, 162, 255);
-      console.log(this_player);
     }
     text(
       `${rank + 1}. ${player.name}`,
@@ -306,4 +277,79 @@ function draw_leaderboard(players) {
       50 + 40 * rank,
     );
   });
+}
+
+function send_pos() {
+  if (
+    horizontal_vel != last_horizontal_vel || vertical_vel != last_vertical_vel
+  ) {
+    send_signal(`vel${horizontal_vel * 100},${vertical_vel * 100}`);
+    last_vertical_vel = vertical_vel;
+    last_horizontal_vel = horizontal_vel;
+  } else {
+    ws.send(0);
+  }
+}
+function draw_player(p) {
+  if (dashing_players.get(p.id) == undefined) {
+    dashing_players.set(
+      p.id,
+      { client: 0, server: p.last_dash },
+    );
+  }
+  if (moving_players.get(p.id) == undefined) {
+    moving_players.set(
+      p.id,
+      { client_update: Date.now(), x: p.vel_x, y: p.vel_y },
+    );
+  }
+  let last_recorded_dash = dashing_players.get(p.id)?.server ?? 0;
+
+  if (
+    last_recorded_dash == p.last_dash &&
+    Date.now() - dashing_players.get(p.id).client > dash_time
+  ) {
+    move_player(p);
+
+    circle(p.x, p.y, 50, 50);
+    fill(255);
+    textAlign(CENTER, CENTER);
+    text(Math.floor(p.score), p.x, p.y - 3);
+    text(p.name, p.x, p.y + 40);
+    rectMode(CORNER);
+    fill(0, 200, 0);
+    rect(p.x - 25, p.y - 40, p.health / 100 * 50, 10);
+    if (p.id == players_list[this_player].id) {
+      cooldown_bar(p.x, p.y);
+    }
+  } else {
+    if (last_recorded_dash != p.last_dash) {
+      dashing_players.set(
+        p.id,
+        { client: Date.now(), server: p.last_dash },
+      );
+    }
+    dashing_players.get(p.id).server = p.last_dash;
+
+    draw_dashing(p);
+    moving_players.get(p.id).client_update = Date.now();
+  }
+}
+function move_player(p) {
+  if (moving_players.get(p.id) == undefined) {
+    moving_players.set(
+      p.id,
+      { client_update: Date.now() },
+    );
+  }
+  let time_multiplier = (Date.now() - moving_players.get(p.id).client_update) /
+    20;
+
+  moving_players.get(p.id).client_update = Date.now();
+  p.x += p.vel_x * time_multiplier;
+  p.y += p.vel_y * time_multiplier;
+
+  p.x = p.x > canvasX ? p.x = canvasX : p.x < 0 ? p.x = 0 : p.x = p.x;
+
+  p.y = p.y > canvasY ? p.y = canvasY : p.y < 0 ? p.y = 0 : p.y = p.y;
 }
