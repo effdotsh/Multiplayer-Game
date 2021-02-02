@@ -50,34 +50,14 @@ function draw() {
   if (socket_ready && name_selected) {
     background(0);
 
-    //itterate spawning players
-    let player_counter = 0;
-    for (p of players_list) {
-      fill(200, 0, 0);
-      if (player_counter == this_player) {
-        fill(41, 167, 240);
-      }
-      player_counter++;
-      if (p.living) {
-        console.log(p.vel_y);
-        draw_player(p);
-      }
-    }
+    show_players();
 
-    //iterate spawning bullets
-    fill(252, 186, 3);
-    bullets_list = move_bullets(bullets_list);
-    for (b of bullets_list) {
-      circle(b.x, b.y, 25, 25);
-    }
+    show_bullets();
 
-    if (Date.now() - last_fire > fire_rate && mouse_down) {
-      let net_x = mouseX - players_list[this_player].x * size_scaler;
-      let net_y = mouseY - players_list[this_player].y * size_scaler;
+    check_fire();
 
-      let fire_vel = bindVector(net_x, net_y);
-      send_signal(`fire${(fire_vel[0])}, ${(fire_vel[1])}`);
-    }
+    respawn_timer();
+
     send_pos();
 
     draw_leaderboard(JSON.parse(JSON.stringify(players_list)));
@@ -87,12 +67,52 @@ function draw() {
   }
   get_keys();
   if (!name_selected) {
-    fill(255);
-    textSize(100);
     namescreen();
   }
 }
+function respawn_timer() {
+  if (!players_list[this_player].living) {
+    let shade = 100;
+    let transparancy = 155;
+    fill(shade, shade, shade, transparancy);
+    rect(0, 0, canvasX, canvasY);
+  }
+}
+function check_fire() {
+  if (Date.now() - last_fire > fire_rate && mouse_down) {
+    let net_x = mouseX - players_list[this_player].x * size_scaler;
+    let net_y = mouseY - players_list[this_player].y * size_scaler;
+
+    let fire_vel = bindVector(net_x, net_y);
+    send_signal(`fire${(fire_vel[0])}, ${(fire_vel[1])}`);
+  }
+}
+function show_bullets() {
+  //iterate spawning bullets
+  fill(252, 186, 3);
+  bullets_list = move_bullets(bullets_list);
+  for (b of bullets_list) {
+    circle(b.x, b.y, 25, 25);
+  }
+}
+function show_players() {
+  //itterate spawning players
+  let player_counter = 0;
+  for (p of players_list) {
+    fill(200, 0, 0);
+    if (player_counter == this_player) {
+      fill(41, 167, 240);
+    }
+    player_counter++;
+    if (p.living) {
+      console.log(p.vel_y);
+      draw_player(p);
+    }
+  }
+}
 function namescreen() {
+  fill(255);
+  textSize(100);
   background(0);
   imageMode(CENTER);
   textFont(aviera_sans);
@@ -287,7 +307,7 @@ function send_pos() {
     last_vertical_vel = vertical_vel;
     last_horizontal_vel = horizontal_vel;
   } else {
-    ws.send(0);
+    send_signal(0);
   }
 }
 function draw_player(p) {
