@@ -20,6 +20,7 @@ const dash_time: string = Deno.env.get("DASH_TIME") ?? "150";
 const bullet_speed: string = Deno.env.get("BULLET_SPEED") ?? "15";
 const bullet_despawn: string = Deno.env.get("BULLET_DESPAWN") ?? "5000";
 const movement_speed: string = Deno.env.get("PLAYER_SPEED") ?? "5";
+const game_title: string = Deno.env.get("GAME_TITLE") ?? "Multiplayer Test";
 
 const server = serve({ port: PORT });
 const socket_url = Deno.env.get("SOCKET_URL") || `ws://localhost:${PORT}/ws`;
@@ -34,7 +35,8 @@ const index_html = await decoder.decode(
   .replace("%DASH_COOLDOWN%", dash_cooldown)
   .replace("%DASH_TIME%", dash_time)
   .replace("%BULLET_DESPAWN%", bullet_despawn)
-  .replace("%MOVE_SPEED%", movement_speed);
+  .replace("%MOVE_SPEED%", movement_speed)
+  .replace("%GAME_TITLE%", game_title);
 
 console.log(socket_url);
 console.log(`http://localhost:${PORT}`);

@@ -23,6 +23,10 @@ let canvasY = 1047;
 let aviera_sans;
 let name_box;
 let ws;
+
+let default_names = ["Bob", "Steve", "Tim", "Jim", "Bob", "BillNye", "Kevin"];
+let default_name =
+  default_names[Math.floor(Math.random() * default_names.length)];
 function preload() {
   aviera_sans = loadFont("AveriaSansLibre-Regular.ttf");
   name_box = loadImage("name_box.png");
@@ -70,7 +74,7 @@ function draw() {
 
     draw_leaderboard(JSON.parse(JSON.stringify(players_list)));
   } else if (!name_selected && socket_ready) {
-    send_signal(`name${name}`);
+    send_signal(`name${(name != "" ? name : default_name)}`);
     name_selected = true;
   }
   get_keys();
@@ -120,15 +124,26 @@ function show_players() {
 }
 function namescreen() {
   fill(255);
-  textSize(100);
   background(0);
   imageMode(CENTER);
   textFont(aviera_sans);
-  text("Enter Your Name", canvasX / 2, canvasY / 2 - 200);
-  image(name_box, canvasX / 2, canvasY / 2 + 100, 1000, 200);
-  textAlign(CENTER, CENTER);
+  textSize(150);
 
-  text(name, canvasX / 2, canvasY / 2 + 87);
+  text(game_title, canvasX / 2, canvasY / 2 - 200);
+
+  textSize(75);
+
+  text("Enter Your Name", canvasX / 2, canvasY / 2);
+
+  //name box
+  if (name == "") {
+    fill(100);
+  }
+  let name_x_offset = 200;
+  let displayname = name == "" ? default_name : name;
+  image(name_box, canvasX / 2, canvasY / 2 + name_x_offset, 500, 175);
+  textAlign(CENTER, CENTER);
+  text(displayname, canvasX / 2, canvasY / 2 + name_x_offset - 20);
 }
 function cooldown_bar(x, y) {
   //draw dash_cooldown bar
@@ -187,9 +202,8 @@ function keyPressed() {
 function keyTyped() {
   if (!name_selected) {
     let name_chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-    let char = key.toLowerCase();
-    if (name_chars.includes(char) && name.length <= 7) {
-      name += char;
+    if (name_chars.includes(key.toLowerCase()) && name.length <= 7) {
+      name += key;
     }
   }
 }
