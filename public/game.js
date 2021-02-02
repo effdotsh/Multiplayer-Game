@@ -17,8 +17,8 @@ let last_fire = Date.now();
 let last_dash = 0;
 let size_scaler = 1;
 
-let canvasX = 2290;
-let canvasY = 950;
+let canvasX = 2144;
+let canvasY = 1047;
 
 let aviera_sans;
 let name_box;
@@ -35,11 +35,19 @@ function setup() {
   textSize(16);
 
   //scale window
-  size_scaler = windowWidth / 2304;
-  createCanvas(2290 * size_scaler, 950 * size_scaler);
+  size_scaler = windowWidth / 2144;
+  let cnv = createCanvas(canvasX * size_scaler, canvasY * size_scaler);
+  cnv.position(0, 0, "fixed");
   scale(size_scaler);
 }
-
+function windowResized() {
+  //scale window
+  size_scaler = windowWidth / 2144;
+  let cnv = createCanvas(canvasX * size_scaler, canvasY * size_scaler);
+  cnv.position(0, 0, "fixed");
+  scale(size_scaler);
+  resizeCanvas(canvasX * size_scaler, canvasY * size_scaler);
+}
 function draw() {
   textFont(aviera_sans);
 

@@ -7,8 +7,8 @@ import {
 import { v4 } from "https://deno.land/std/uuid/mod.ts";
 import "https://deno.land/x/dotenv/load.ts";
 
-let canvasX: number = 2290;
-let canvasY: number = 950;
+let canvasX: number = 2144;
+let canvasY: number = 1047;
 
 class Player {
   id = gen_id();
@@ -361,7 +361,7 @@ function game_background() {
       updatePositions(uid, user.socket, user.player);
     }
 
-    //respawn dead players
+    //respawn dead players.
     if (Date.now() - user.player.death_time >= respawn) {
       user.player.living = true;
       updatePlayers();
