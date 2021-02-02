@@ -107,16 +107,14 @@ function updateMssg() {
   return players;
 }
 
-function tellPlayers(mesage: Signal) {
+function tellPlayers(message: Signal) {
   let player_counter = 0;
   sockets.forEach((user, uid) => {
     let socket = user.socket;
     if (!socket.isClosed) {
-      mesage.you_are = player_counter;
+      message.you_are = player_counter;
       player_counter += 1;
-      try {
-        socket.send(JSON.stringify(mesage));
-      } catch {}
+      socket.send(JSON.stringify(message));
     } else {
       sockets.delete(uid);
     }
@@ -268,6 +266,7 @@ const wsManager = async (ws: WebSocket) => {
   const uid = v4.generate();
   if (!sockets.has(uid)) {
     sockets.set(uid, { socket: ws, player: new Player() });
+    updatePlayers();
   }
   for await (const ev of ws) {
     //@ts-ignore
@@ -301,6 +300,7 @@ const wsManager = async (ws: WebSocket) => {
             dummy_mssg.type = "bullets";
             dummy_mssg.info.push(mssg.bullets);
             ws.send(JSON.stringify(mssg));
+            updatePlayers();
           } else {
             sockets.delete(uid);
           }

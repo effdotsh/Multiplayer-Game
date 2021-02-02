@@ -265,9 +265,6 @@ function init_socket() {
     if (type === "players" || all) {
       let players = info;
       players_list = players;
-      let template = `
-            <p>Connections: ${players.length}</p>`;
-      connectionDisplay.innerHTML = template;
     }
     if (type === "bullets" || all) {
       const bullets = info;
@@ -288,6 +285,7 @@ function init_socket() {
     const { you_are } = JSON.parse(data);
 
     this_player = you_are;
+    console.log(this_player);
   });
 }
 
