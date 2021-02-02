@@ -60,7 +60,6 @@ function draw() {
       player_counter++;
       if (p.living) {
         console.log(p.vel_y);
-        move_player(p);
         draw_player(p);
       }
     }
@@ -80,6 +79,7 @@ function draw() {
       send_signal(`fire${(fire_vel[0])}, ${(fire_vel[1])}`);
     }
     send_pos();
+
     draw_leaderboard(JSON.parse(JSON.stringify(players_list)));
   } else if (!name_selected && socket_ready) {
     send_signal(`name${name}`);
@@ -286,6 +286,8 @@ function send_pos() {
     send_signal(`vel${horizontal_vel * 100},${vertical_vel * 100}`);
     last_vertical_vel = vertical_vel;
     last_horizontal_vel = horizontal_vel;
+  } else {
+    ws.send(0);
   }
 }
 function draw_player(p) {
@@ -295,12 +297,20 @@ function draw_player(p) {
       { client: 0, server: p.last_dash },
     );
   }
+  if (moving_players.get(p.id) == undefined) {
+    moving_players.set(
+      p.id,
+      { client_update: Date.now(), x: p.vel_x, y: p.vel_y },
+    );
+  }
   let last_recorded_dash = dashing_players.get(p.id)?.server ?? 0;
 
   if (
     last_recorded_dash == p.last_dash &&
     Date.now() - dashing_players.get(p.id).client > dash_time
   ) {
+    move_player(p);
+
     circle(p.x, p.y, 50, 50);
     fill(255);
     textAlign(CENTER, CENTER);
@@ -322,16 +332,24 @@ function draw_player(p) {
     dashing_players.get(p.id).server = p.last_dash;
 
     draw_dashing(p);
+    moving_players.get(p.id).client_update = Date.now();
   }
 }
 function move_player(p) {
   if (moving_players.get(p.id) == undefined) {
     moving_players.set(
       p.id,
-      { client_update: Date.now(), x: p.x, y: p.y },
+      { client_update: Date.now() },
     );
   }
-  let player = moving_players.get(p.id);
-  player.x += p.vel_x;
-  player.y += p.vel_y;
+  let time_multiplier = (Date.now() - moving_players.get(p.id).client_update) /
+    20;
+
+  moving_players.get(p.id).client_update = Date.now();
+  p.x += p.vel_x * time_multiplier;
+  p.y += p.vel_y * time_multiplier;
+
+  p.x = p.x > canvasX ? p.x = canvasX : p.x < 0 ? p.x = 0 : p.x = p.x;
+
+  p.y = p.y > canvasY ? p.y = canvasY : p.y < 0 ? p.y = 0 : p.y = p.y;
 }

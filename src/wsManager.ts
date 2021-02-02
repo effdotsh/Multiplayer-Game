@@ -169,12 +169,7 @@ function updateVelocity(
   player.vel_y = velocity[1];
   sockets.set(uid, { socket: ws, player: player });
 
-  //tell players about the movement
-  mssg.players = updateMssg();
-  let small_mssg = new Signal();
-  small_mssg.info = mssg.players;
-  small_mssg.type = "players";
-  tellPlayers(small_mssg);
+  updatePlayers();
 }
 function fire_bullet(
   uid: string,
@@ -236,6 +231,7 @@ function check_collisions(
               users.get(bullet.fired_by).player.score++;
             }
           }
+          updatePlayers();
         }
       }
     });
@@ -272,6 +268,7 @@ const wsManager = async (ws: WebSocket) => {
 
     if (isWebSocketCloseEvent(ev)) {
       sockets.delete(uid);
+      updatePlayers();
     } else if (player != undefined && !ws.isClosed) {
       //delete socket if connection closed
       if (typeof ev === "string") {
@@ -283,26 +280,20 @@ const wsManager = async (ws: WebSocket) => {
             player.name = ev.slice(4);
           }
         } else if (ev.includes("vel")) { //Handle player movement
-          if (Date.now() - player.last_dash > dash_time) {
-            updateVelocity(uid, ws, player, ev);
-          }
+          updateVelocity(uid, ws, player, ev);
         } else if (ev.includes("fire") && player.living) {
           if (Date.now() - player.last_dash > dash_time) {
             fire_bullet(uid, ws, player, ev);
           }
         } else if (ev.includes("wake")) {
           if (!ws.isClosed) {
-            try {
-              let dummy_mssg = new Signal();
-              dummy_mssg.type = "players";
-              dummy_mssg.info.push(mssg.players);
-              ws.send(JSON.stringify(dummy_mssg));
-              dummy_mssg.type = "bullets";
-              dummy_mssg.info.push(mssg.bullets);
-              ws.send(JSON.stringify(mssg));
-            } catch (err) {
-              console.log(err);
-            }
+            let dummy_mssg = new Signal();
+            dummy_mssg.type = "players";
+            dummy_mssg.info.push(mssg.players);
+            ws.send(JSON.stringify(dummy_mssg));
+            dummy_mssg.type = "bullets";
+            dummy_mssg.info.push(mssg.bullets);
+            ws.send(JSON.stringify(mssg));
           } else {
             sockets.delete(uid);
           }
@@ -316,6 +307,8 @@ const wsManager = async (ws: WebSocket) => {
 
             updatePositions(uid, ws, player, dash_distance);
             player.updateTime = Date.now() + dash_time;
+
+            updatePlayers();
           }
         }
 
@@ -350,12 +343,23 @@ const wsManager = async (ws: WebSocket) => {
         }
       }
     }
+    game_background();
   }
 };
-async function game_background() {
+function game_background() {
   sockets.forEach((user, uid) => {
-    updatePositions(uid, user.socket, user.player);
-    console.log(user.player.vel_x);
+    if (Date.now() - user.player.last_dash > dash_time) {
+      updatePositions(uid, user.socket, user.player);
+      console.log(user.player.x);
+    }
   });
 }
-export { pos, wsManager };
+function updatePlayers() {
+  //tell players about the movement
+  mssg.players = updateMssg();
+  let small_mssg = new Signal();
+  small_mssg.info = mssg.players;
+  small_mssg.type = "players";
+  tellPlayers(small_mssg);
+}
+export { game_background, wsManager };
