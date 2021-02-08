@@ -31,7 +31,9 @@ function preload() {
   aviera_sans = loadFont("AveriaSansLibre-Regular.ttf");
   name_box = loadImage("name_box.png");
 }
-
+function get_scale() {
+  return min(windowWidth / canvasX, windowHeight / canvasY);
+}
 function setup() {
   fill(255);
   textAlign(CENTER, CENTER);
@@ -39,18 +41,20 @@ function setup() {
   textSize(16);
 
   //scale window
-  size_scaler = windowWidth / 2144;
+  size_scaler = get_scale();
   let cnv = createCanvas(canvasX * size_scaler, canvasY * size_scaler);
-  cnv.position(0, 0, "fixed");
+  cnv.position(windowWidth / 2 - (canvasX * size_scaler) / 2, 0, "fixed");
   scale(size_scaler);
 }
+
 function windowResized() {
   //scale window
-  size_scaler = windowWidth / 2144;
+  size_scaler = get_scale();
   let cnv = createCanvas(canvasX * size_scaler, canvasY * size_scaler);
-  cnv.position(0, 0, "fixed");
+  cnv.position(windowWidth / 2 - (canvasX * size_scaler) / 2, 0, "fixed");
+  console.log(cnv.position);
+
   scale(size_scaler);
-  resizeCanvas(canvasX * size_scaler, canvasY * size_scaler);
 }
 function draw() {
   textFont(aviera_sans);
@@ -117,7 +121,6 @@ function show_players() {
     }
     player_counter++;
     if (p.living) {
-      console.log(p.vel_y);
       draw_player(p);
     }
   }
@@ -285,7 +288,6 @@ function init_socket() {
     const { you_are } = JSON.parse(data);
 
     this_player = you_are;
-    console.log(this_player);
   });
 }
 
