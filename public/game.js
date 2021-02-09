@@ -29,6 +29,7 @@ let death_time = p3_respawn;
 let default_names = ["Bob", "Steve", "Tim", "Jim", "Bob", "BillNye", "Kevin"];
 let default_name =
   default_names[Math.floor(Math.random() * default_names.length)];
+
 function preload() {
   aviera_sans = loadFont("AveriaSansLibre-Regular.ttf");
   name_box = loadImage("name_box.png");
@@ -398,10 +399,11 @@ function move_player(p) {
       { client_update: Date.now() },
     );
   }
-  let time_multiplier = (Date.now() - moving_players.get(p.id).client_update) /
+  let new_update = Date.now();
+  let time_multiplier = (new_update - moving_players.get(p.id).client_update) /
     20;
 
-  moving_players.get(p.id).client_update = Date.now();
+  moving_players.get(p.id).client_update = new_update;
   p.x += p.vel_x * time_multiplier;
   p.y += p.vel_y * time_multiplier;
 

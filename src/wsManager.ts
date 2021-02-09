@@ -362,7 +362,10 @@ function game_background() {
     }
 
     //respawn dead players.
-    if (Date.now() - user.player.death_time >= respawn) {
+    if (
+      Date.now() - user.player.death_time >= respawn - 100 &&
+      Date.now() - user.player.death_time <= respawn + 100
+    ) {
       user.player.living = true;
       updatePlayers();
     }
