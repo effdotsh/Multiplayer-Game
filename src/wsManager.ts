@@ -275,7 +275,11 @@ const wsManager = async (ws: WebSocket) => {
     if (isWebSocketCloseEvent(ev)) {
       sockets.delete(uid);
       updatePlayers();
-    } else if (player != undefined && player.living && !ws.isClosed) {
+    } else if (
+      player != undefined &&
+      (player.living || (typeof ev == "string" && ev.includes("vel"))) &&
+      !ws.isClosed
+    ) {
       //delete socket if connection closed
       if (typeof ev === "string") {
         if (ev.slice(0, 5).includes("name")) {
