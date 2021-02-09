@@ -24,6 +24,8 @@ let aviera_sans;
 let name_box;
 let ws;
 
+let death_time = p3_respawn;
+
 let default_names = ["Bob", "Steve", "Tim", "Jim", "Bob", "BillNye", "Kevin"];
 let default_name =
   default_names[Math.floor(Math.random() * default_names.length)];
@@ -88,10 +90,22 @@ function draw() {
 }
 function respawn_timer() {
   if (!players_list[this_player].living) {
+    let respawn_time = players_list.length <= 2 ? p2_respawn : p3_respawn;
+    death_time = death_time == 0 ? Date.now() : death_time;
     let shade = 100;
     let transparancy = 155;
     fill(shade, shade, shade, transparancy);
     rect(0, 0, canvasX, canvasY);
+
+    fill(255);
+    textSize(40);
+    let timer = respawn_time - (Date.now() - death_time);
+    timer = timer == respawn_time ? timer : timer + 0.1;
+    timer = float(Math.round(timer / 100) / 10);
+    timer = timer == int(timer) ? `${timer}.0` : timer;
+    text(`${timer} Seconds`, canvasX / 2, canvasY / 2);
+  } else {
+    death_time = 0;
   }
 }
 function check_fire() {

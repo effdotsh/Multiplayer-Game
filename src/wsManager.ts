@@ -55,7 +55,7 @@ class Signal {
 }
 const respawn_time: number = parseInt(Deno.env.get("RESPAWN_TIME") ?? "3000");
 const two_respawn: number = parseInt(
-  Deno.env.get("RESPAWN_TIME") ?? (respawn_time / 2).toString(),
+  Deno.env.get("2P_RESPAWN_TIME") ?? (respawn_time / 2).toString(),
 );
 const fire_rate: number = parseInt(Deno.env.get("FIRE_RATE") ?? "400");
 const bullet_dmg: number = parseInt(Deno.env.get("BULLET_DMG") ?? "35");
