@@ -17,17 +17,26 @@ let last_fire = Date.now();
 let last_dash = 0;
 let size_scaler = 1;
 
-let canvasX = 2290;
-let canvasY = 950;
+let canvasX = 2144;
+let canvasY = 1047;
 
 let aviera_sans;
 let name_box;
 let ws;
+
+let death_time = p3_respawn;
+
+let default_names = ["Bob", "Steve", "Tim", "Jim", "Bob", "BillNye", "Kevin"];
+let default_name =
+  default_names[Math.floor(Math.random() * default_names.length)];
+
 function preload() {
   aviera_sans = loadFont("AveriaSansLibre-Regular.ttf");
   name_box = loadImage("name_box.png");
 }
-
+function get_scale() {
+  return min(windowWidth / canvasX, windowHeight / canvasY);
+}
 function setup() {
   fill(255);
   textAlign(CENTER, CENTER);
@@ -35,11 +44,20 @@ function setup() {
   textSize(16);
 
   //scale window
-  size_scaler = windowWidth / 2304;
-  createCanvas(2290 * size_scaler, 950 * size_scaler);
+  size_scaler = get_scale();
+  let cnv = createCanvas(canvasX * size_scaler, canvasY * size_scaler);
+  cnv.position(windowWidth / 2 - (canvasX * size_scaler) / 2, 0, "fixed");
   scale(size_scaler);
 }
 
+function windowResized() {
+  //scale window
+  size_scaler = get_scale();
+  let cnv = createCanvas(canvasX * size_scaler, canvasY * size_scaler);
+  cnv.position(windowWidth / 2 - (canvasX * size_scaler) / 2, 0, "fixed");
+
+  scale(size_scaler);
+}
 function draw() {
   textFont(aviera_sans);
 
@@ -50,57 +68,97 @@ function draw() {
   if (socket_ready && name_selected) {
     background(0);
 
-    //itterate spawning players
-    let player_counter = 0;
-    for (p of players_list) {
-      fill(200, 0, 0);
-      if (player_counter == this_player) {
-        fill(41, 167, 240);
-      }
-      player_counter++;
-      if (p.living) {
-        console.log(p.vel_y);
-        draw_player(p);
-      }
-    }
+    show_players();
 
-    //iterate spawning bullets
-    fill(252, 186, 3);
-    bullets_list = move_bullets(bullets_list);
-    for (b of bullets_list) {
-      circle(b.x, b.y, 25, 25);
-    }
+    show_bullets();
 
-    if (Date.now() - last_fire > fire_rate && mouse_down) {
-      let net_x = mouseX - players_list[this_player].x * size_scaler;
-      let net_y = mouseY - players_list[this_player].y * size_scaler;
+    check_fire();
 
-      let fire_vel = bindVector(net_x, net_y);
-      send_signal(`fire${(fire_vel[0])}, ${(fire_vel[1])}`);
-    }
-    send_pos();
+    respawn_timer();
 
     draw_leaderboard(JSON.parse(JSON.stringify(players_list)));
+    get_keys();
   } else if (!name_selected && socket_ready) {
-    send_signal(`name${name}`);
+    send_signal(`name${(name != "" ? name : default_name)}`);
     name_selected = true;
   }
-  get_keys();
   if (!name_selected) {
-    fill(255);
-    textSize(100);
     namescreen();
   }
 }
+function respawn_timer() {
+  if (!players_list[this_player].living) {
+    let respawn_time = players_list.length <= 2 ? p2_respawn : p3_respawn;
+    death_time = death_time == 0 ? Date.now() : death_time;
+    let shade = 100;
+    let transparancy = 155;
+    fill(shade, shade, shade, transparancy);
+    rect(0, 0, canvasX, canvasY);
+
+    fill(255);
+    textSize(40);
+    let timer = respawn_time - (Date.now() - death_time);
+    timer = timer == respawn_time ? timer : timer + 0.1;
+    timer = float(Math.round(timer / 100) / 10);
+    timer = timer == int(timer) ? `${timer}.0` : timer;
+    text(`${timer} Seconds`, canvasX / 2, canvasY / 2);
+  } else {
+    death_time = 0;
+  }
+}
+function check_fire() {
+  if (Date.now() - last_fire > fire_rate && mouse_down) {
+    let net_x = mouseX - players_list[this_player].x * size_scaler;
+    let net_y = mouseY - players_list[this_player].y * size_scaler;
+
+    let fire_vel = bindVector(net_x, net_y);
+    send_signal(`fire${(fire_vel[0])}, ${(fire_vel[1])}`);
+  }
+}
+function show_bullets() {
+  //iterate spawning bullets
+  fill(252, 186, 3);
+  bullets_list = move_bullets(bullets_list);
+  for (b of bullets_list) {
+    circle(b.x, b.y, 25, 25);
+  }
+}
+function show_players() {
+  //itterate spawning players
+  let player_counter = 0;
+  for (p of players_list) {
+    fill(200, 0, 0);
+    if (player_counter == this_player) {
+      fill(41, 167, 240);
+    }
+    player_counter++;
+    if (p.living) {
+      draw_player(p);
+    }
+  }
+}
 function namescreen() {
+  fill(255);
   background(0);
   imageMode(CENTER);
   textFont(aviera_sans);
-  text("Enter Your Name", canvasX / 2, canvasY / 2 - 200);
-  image(name_box, canvasX / 2, canvasY / 2 + 100, 1000, 200);
-  textAlign(CENTER, CENTER);
+  textSize(150);
 
-  text(name, canvasX / 2, canvasY / 2 + 87);
+  text(game_title, canvasX / 2, canvasY / 2 - 200);
+
+  textSize(75);
+
+  text("Enter Your Name", canvasX / 2, canvasY / 2);
+
+  //name box
+  if (name == "") {
+    fill(100);
+  }
+  let name_x_offset = 200;
+  let displayname = name == "" ? default_name : name;
+  image(name_box, canvasX / 2, canvasY / 2 + name_x_offset, 500, 175);
+  textAlign(CENTER, CENTER);
+  text(displayname, canvasX / 2, canvasY / 2 + name_x_offset - 20);
 }
 function cooldown_bar(x, y) {
   //draw dash_cooldown bar
@@ -137,6 +195,11 @@ function get_keys() {
   if (keyIsDown(68)) { // D
     horizontal_vel += 1;
   }
+  send_pos();
+
+  if (keyIsDown(16) || keyIsDown(32)) {
+    dash();
+  }
 }
 
 function mousePressed() {
@@ -147,9 +210,6 @@ function mouseReleased() {
 }
 
 function keyPressed() {
-  if (keyCode === 16 || keyCode === 32) {
-    dash();
-  }
   if (keyCode === 13) {
     if (ws == undefined) {
       init_socket();
@@ -159,9 +219,8 @@ function keyPressed() {
 function keyTyped() {
   if (!name_selected) {
     let name_chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-    let char = key.toLowerCase();
-    if (name_chars.includes(char) && name.length <= 7) {
-      name += char;
+    if (name_chars.includes(key.toLowerCase()) && name.length <= 7) {
+      name += key;
     }
   }
 }
@@ -223,9 +282,6 @@ function init_socket() {
     if (type === "players" || all) {
       let players = info;
       players_list = players;
-      let template = `
-            <p>Connections: ${players.length}</p>`;
-      connectionDisplay.innerHTML = template;
     }
     if (type === "bullets" || all) {
       const bullets = info;
@@ -287,7 +343,7 @@ function send_pos() {
     last_vertical_vel = vertical_vel;
     last_horizontal_vel = horizontal_vel;
   } else {
-    ws.send(0);
+    send_signal(0);
   }
 }
 function draw_player(p) {
@@ -342,10 +398,11 @@ function move_player(p) {
       { client_update: Date.now() },
     );
   }
-  let time_multiplier = (Date.now() - moving_players.get(p.id).client_update) /
+  let new_update = Date.now();
+  let time_multiplier = (new_update - moving_players.get(p.id).client_update) /
     20;
 
-  moving_players.get(p.id).client_update = Date.now();
+  moving_players.get(p.id).client_update = new_update;
   p.x += p.vel_x * time_multiplier;
   p.y += p.vel_y * time_multiplier;
 

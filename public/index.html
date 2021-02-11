@@ -10,16 +10,10 @@
     <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
     <link rel="manifest" href="favicon/site.webmanifest">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="game.css">
 </head>
 
 <body>
-    <h1>Multiplayer Test</h1>
-
-    <div class="connections">
-        <p></p>
-    </div>
-
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.2.0/p5.min.js"></script>
     <script>
         var socket_url = ("%SOCKET_URL%")
@@ -28,11 +22,14 @@
         var dash_time = ("%DASH_TIME%");
         let bullet_despawn = ("%BULLET_DESPAWN%");
         let move_speed = ("%MOVE_SPEED%");
+        let p2_respawn = "%P2_RESPAWN%";
+        let p3_respawn = "%P3_RESPAWN%";
+
+        let game_title = "%GAME_TITLE%"
 
         var name = '';
         var name_selected = false;
         var socket_ready = false;
-        const connectionDisplay = document.querySelector(".connections");
 
         $(document).on("keydown", function (e) {
             if (e.which === 8) {

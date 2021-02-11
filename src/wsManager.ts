@@ -7,8 +7,8 @@ import {
 import { v4 } from "https://deno.land/std/uuid/mod.ts";
 import "https://deno.land/x/dotenv/load.ts";
 
-let canvasX: number = 2290;
-let canvasY: number = 950;
+let canvasX: number = 2144;
+let canvasY: number = 1047;
 
 class Player {
   id = gen_id();
@@ -27,6 +27,8 @@ class Player {
   last_dash: number = 0;
   dash_from_x: number = 0;
   dash_from_y: number = 0;
+
+  death_time = 0;
 }
 
 class Bullet {
@@ -51,7 +53,10 @@ class Signal {
   info: any[] = new Array();
   you_are: number = 0;
 }
-
+const respawn_time: number = parseInt(Deno.env.get("RESPAWN_TIME") ?? "3000");
+const two_respawn: number = parseInt(
+  Deno.env.get("2P_RESPAWN_TIME") ?? (respawn_time / 2).toString(),
+);
 const fire_rate: number = parseInt(Deno.env.get("FIRE_RATE") ?? "400");
 const bullet_dmg: number = parseInt(Deno.env.get("BULLET_DMG") ?? "35");
 const dash_cooldown: number = parseInt(Deno.env.get("DASH_COOLDOWN") ?? "1000");
@@ -102,16 +107,14 @@ function updateMssg() {
   return players;
 }
 
-function tellPlayers(mesage: Signal) {
+function tellPlayers(message: Signal) {
   let player_counter = 0;
   sockets.forEach((user, uid) => {
     let socket = user.socket;
     if (!socket.isClosed) {
-      mesage.you_are = player_counter;
+      message.you_are = player_counter;
       player_counter += 1;
-      try {
-        socket.send(JSON.stringify(mesage));
-      } catch {}
+      socket.send(JSON.stringify(message));
     } else {
       sockets.delete(uid);
     }
@@ -254,6 +257,8 @@ function dealDamage(player: Player): { player: Player; killed: boolean } {
     player.x = Math.floor(Math.random() * canvasX);
     player.y = Math.floor(Math.random() * canvasY);
     player.score = Math.max(0, player.score - 1);
+    player.living = false;
+    player.death_time = Date.now();
   }
   return { player: player, killed: killed };
 }
@@ -261,6 +266,7 @@ const wsManager = async (ws: WebSocket) => {
   const uid = v4.generate();
   if (!sockets.has(uid)) {
     sockets.set(uid, { socket: ws, player: new Player() });
+    updatePlayers();
   }
   for await (const ev of ws) {
     //@ts-ignore
@@ -269,7 +275,11 @@ const wsManager = async (ws: WebSocket) => {
     if (isWebSocketCloseEvent(ev)) {
       sockets.delete(uid);
       updatePlayers();
-    } else if (player != undefined && !ws.isClosed) {
+    } else if (
+      player != undefined &&
+      (player.living || (typeof ev == "string" && ev.includes("vel"))) &&
+      !ws.isClosed
+    ) {
       //delete socket if connection closed
       if (typeof ev === "string") {
         if (ev.slice(0, 5).includes("name")) {
@@ -294,6 +304,7 @@ const wsManager = async (ws: WebSocket) => {
             dummy_mssg.type = "bullets";
             dummy_mssg.info.push(mssg.bullets);
             ws.send(JSON.stringify(mssg));
+            updatePlayers();
           } else {
             sockets.delete(uid);
           }
@@ -347,10 +358,20 @@ const wsManager = async (ws: WebSocket) => {
   }
 };
 function game_background() {
+  let respawn = sockets.size <= 2 ? two_respawn : respawn_time;
+
   sockets.forEach((user, uid) => {
     if (Date.now() - user.player.last_dash > dash_time) {
       updatePositions(uid, user.socket, user.player);
-      console.log(user.player.x);
+    }
+
+    //respawn dead players.
+    if (
+      Date.now() - user.player.death_time >= respawn - 100 &&
+      Date.now() - user.player.death_time <= respawn + 100
+    ) {
+      user.player.living = true;
+      updatePlayers();
     }
   });
 }
