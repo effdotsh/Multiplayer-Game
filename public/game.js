@@ -77,8 +77,6 @@ function draw() {
 
     respawn_timer();
 
-    send_pos();
-
     draw_leaderboard(JSON.parse(JSON.stringify(players_list)));
   } else if (!name_selected && socket_ready) {
     send_signal(`name${(name != "" ? name : default_name)}`);
@@ -198,6 +196,11 @@ function get_keys() {
   if (keyIsDown(68)) { // D
     horizontal_vel += 1;
   }
+  send_pos();
+
+  if (keyIsDown(16) || keyIsDown(32)) {
+    dash();
+  }
 }
 
 function mousePressed() {
@@ -208,9 +211,6 @@ function mouseReleased() {
 }
 
 function keyPressed() {
-  if (keyCode === 16 || keyCode === 32) {
-    dash();
-  }
   if (keyCode === 13) {
     if (ws == undefined) {
       init_socket();
