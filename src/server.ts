@@ -48,42 +48,44 @@ console.log(socket_url);
 console.log(`http://localhost:${PORT}`);
 
 for await (const req of server) {
-  if (req.url === "/ws") {
-    if (acceptable(req)) {
-      acceptWebSocket({
-        conn: req.conn,
-        bufReader: req.r,
-        bufWriter: req.w,
-        headers: req.headers,
-      }).then(wsManager);
-    }
-  } else if (!req.url.includes("..")) { //send all non-websocket requests to the public folder
-    if (req.url === "/" || req.url === "/index") {
-      req.respond({
-        status: 200,
-        body: index_html,
-      });
-    } else {
-      let status: number;
-      if (existsSync(`./public${req.url}`)) {
-        let file = await Deno.open(`./public${req.url}`);
-        status = 200;
+  try {
+    if (req.url === "/ws") {
+      if (acceptable(req)) {
+        acceptWebSocket({
+          conn: req.conn,
+          bufReader: req.r,
+          bufWriter: req.w,
+          headers: req.headers,
+        }).then(wsManager);
+      }
+    } else if (!req.url.includes("..")) { //send all non-websocket requests to the public folder
+      if (req.url === "/" || req.url === "/index") {
         req.respond({
-          status: status,
-          body: file,
+          status: 200,
+          body: index_html,
         });
       } else {
-        status = 404;
-        req.respond({
-          status: status,
-          body: "file not found",
-        });
+        let status: number;
+        if (existsSync(`./public${req.url}`)) {
+          let file = await Deno.open(`./public${req.url}`);
+          status = 200;
+          req.respond({
+            status: status,
+            body: file,
+          });
+        } else {
+          status = 404;
+          req.respond({
+            status: status,
+            body: "file not found",
+          });
+        }
       }
+    } else {
+      req.respond({
+        status: 401,
+        body: "Forbidden",
+      });
     }
-  } else {
-    req.respond({
-      status: 401,
-      body: "Forbidden",
-    });
-  }
+  } catch {}
 }

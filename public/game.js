@@ -302,6 +302,7 @@ function init_socket() {
     const { you_are } = JSON.parse(data);
 
     this_player = you_are;
+    console.log(this_player);
   });
 }
 

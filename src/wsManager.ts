@@ -194,7 +194,7 @@ function fire_bullet(
       locs[1],
       bullet_speed,
     );
-    bullet.fired_by = uid;
+    bullet.fired_by = player.id;
     mssg.bullets.push(bullet);
 
     let bullet_mssg = new Signal();
@@ -214,7 +214,7 @@ function check_collisions(
     users.forEach((user, uid) => {
       let player = user.player;
       if (
-        bullet.fired_by != uid && Math.abs(bullet.x - player.x) < 37.5 &&
+        bullet.fired_by != player.id && Math.abs(bullet.x - player.x) < 37.5 &&
         Math.abs(bullet.y - player.y) < 37.5 &&
         player.living
       ) {
@@ -225,13 +225,17 @@ function check_collisions(
         if (hit != undefined && Date.now() - hit.player.last_dash > dash_time) {
           let dmg = dealDamage(hit.player);
           hit.player = dmg.player;
-          //@ts-ignore
-          users.get(bullet.fired_by).player.score += 0.5;
-          if (dmg.killed) {
-            let shooter = users.get(bullet.fired_by)?.player;
-            if (shooter != undefined) {
-              //@ts-ignore
-              users.get(bullet.fired_by).player.score++;
+          let shooter = new Player();
+          users.forEach((player) => {
+            if (player.player.id == bullet.fired_by) {
+              shooter = player.player;
+            }
+          });
+          // let shooter = users.get(bullet.fired_by)?.player;
+          if (shooter != undefined) {
+            shooter.score += 0.5;
+            if (dmg.killed) {
+              shooter.score++;
             }
           }
           updatePlayers();
@@ -320,6 +324,28 @@ const wsManager = async (ws: WebSocket) => {
             player.updateTime = Date.now() + dash_time;
 
             updatePlayers();
+          }
+        } else if (ev.includes("sync")) {
+          if (!ws.isClosed) {
+            let you_are: number = 0;
+            let player_counter: number = 0;
+            sockets.forEach((user, uuid) => {
+              if (uid == uuid) {
+                you_are = player_counter;
+              }
+              player_counter++;
+            });
+            let dummy_mssg = new Signal();
+            dummy_mssg.you_are = you_are;
+            dummy_mssg.type = "sync_player";
+            dummy_mssg.info.push(mssg.players);
+            ws.send(JSON.stringify(dummy_mssg));
+            dummy_mssg = new Signal();
+            dummy_mssg.type = "sync_bullet";
+            dummy_mssg.info.push(mssg.bullets);
+            ws.send(JSON.stringify(dummy_mssg));
+          } else {
+            sockets.delete(uid);
           }
         }
 
