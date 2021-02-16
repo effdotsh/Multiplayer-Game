@@ -30,6 +30,7 @@ let default_names = ["Bob", "Steve", "Tim", "Jim", "Bob", "BillNye", "Kevin"];
 let default_name =
   default_names[Math.floor(Math.random() * default_names.length)];
 
+let spectating = false;
 function preload() {
   aviera_sans = loadFont("AveriaSansLibre-Regular.ttf");
   name_box = loadImage("name_box.png");
@@ -132,7 +133,7 @@ function show_players() {
       fill(41, 167, 240);
     }
     player_counter++;
-    if (p.living) {
+    if (p.living && !p.spectating) {
       draw_player(p);
     }
   }
@@ -159,6 +160,22 @@ function namescreen() {
   image(name_box, canvasX / 2, canvasY / 2 + name_x_offset, 500, 175);
   textAlign(CENTER, CENTER);
   text(displayname, canvasX / 2, canvasY / 2 + name_x_offset - 20);
+
+  //spectate
+  fill(255);
+  textSize(45);
+  imageMode(CENTER, CENTER);
+
+  image(name_box, 100, -162 + name_x_offset, 200, 75);
+
+  text("Spectate", 100, 25);
+  if (mouse_down && 0 < mouseX && mouseX < 125 && mouseY < 40) {
+    if (ws == undefined) {
+      spectating = true;
+
+      init_socket();
+    }
+  }
 }
 function cooldown_bar(x, y) {
   //draw dash_cooldown bar
@@ -271,8 +288,12 @@ function init_socket() {
   };
   ws.onopen = function (event) {
     socket_ready = true;
-    send_signal("wake");
-    send_signal(`vel0,0`);
+    if (spectating) {
+      ws.send("spectate");
+    } else {
+      send_signal("wake");
+      send_signal(`vel0,0`);
+    }
   };
   ws.addEventListener("message", ({ data }) => {
     const parsed = JSON.parse(data);
@@ -318,21 +339,25 @@ function draw_leaderboard(players) {
   players.sort((a, b) =>
     (a.score > b.score) ? 1 : ((b.score > a.score) ? -1 : 0)
   ).reverse();
-  players.forEach((player, rank) => {
-    fill(255);
-    if (player.id === players_list[this_player].id) {
-      fill(0, 162, 255);
+  rank = -1;
+  players.forEach((player) => {
+    if (!player.spectating) {
+      rank++;
+      fill(255);
+      if (player.id === players_list[this_player].id) {
+        fill(0, 162, 255);
+      }
+      text(
+        `${rank + 1}. ${player.name}`,
+        50,
+        50 + 40 * rank,
+      );
+      text(
+        `${int(player.score)}`,
+        220,
+        50 + 40 * rank,
+      );
     }
-    text(
-      `${rank + 1}. ${player.name}`,
-      50,
-      50 + 40 * rank,
-    );
-    text(
-      `${int(player.score)}`,
-      220,
-      50 + 40 * rank,
-    );
   });
 }
 

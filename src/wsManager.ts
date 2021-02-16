@@ -28,7 +28,9 @@ class Player {
   dash_from_x: number = 0;
   dash_from_y: number = 0;
 
-  death_time = 0;
+  death_time: number = 0;
+
+  spectating: boolean = false;
 }
 
 class Bullet {
@@ -216,13 +218,15 @@ function check_collisions(
       if (
         bullet.fired_by != player.id && Math.abs(bullet.x - player.x) < 37.5 &&
         Math.abs(bullet.y - player.y) < 37.5 &&
-        player.living
+        player.living && !player.spectating
       ) {
         hit_list.push(uid);
         bullet_trash.push(bullet.id);
 
         let hit = users.get(uid);
-        if (hit != undefined && Date.now() - hit.player.last_dash > dash_time) {
+        if (
+          hit != undefined && Date.now() - hit.player.last_dash > dash_time
+        ) {
           let dmg = dealDamage(hit.player);
           hit.player = dmg.player;
           let shooter = new Player();
@@ -282,7 +286,7 @@ const wsManager = async (ws: WebSocket) => {
     } else if (
       player != undefined &&
       (player.living || (typeof ev == "string" && ev.includes("vel"))) &&
-      !ws.isClosed
+      !ws.isClosed && !player.spectating
     ) {
       //delete socket if connection closed
       if (typeof ev === "string") {
@@ -347,6 +351,9 @@ const wsManager = async (ws: WebSocket) => {
           } else {
             sockets.delete(uid);
           }
+        } else if (ev.includes("spectate")) {
+          player.spectating = true;
+          updatePlayers();
         }
 
         //move bullets and despawn old ones
@@ -394,7 +401,8 @@ function game_background() {
     //respawn dead players.
     if (
       Date.now() - user.player.death_time >= respawn - 100 &&
-      Date.now() - user.player.death_time <= respawn + 100
+      Date.now() - user.player.death_time <= respawn + 100 &&
+      !user.player.spectating
     ) {
       user.player.living = true;
       updatePlayers();
