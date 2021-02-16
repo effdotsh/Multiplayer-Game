@@ -143,7 +143,7 @@ function namescreen() {
   background(0);
   imageMode(CENTER);
   textFont(aviera_sans);
-  textSize(150);
+  textSize(title_size);
 
   text(game_title, canvasX / 2, canvasY / 2 - 200);
 

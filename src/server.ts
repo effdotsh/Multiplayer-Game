@@ -21,6 +21,7 @@ const bullet_speed: string = Deno.env.get("BULLET_SPEED") ?? "15";
 const bullet_despawn: string = Deno.env.get("BULLET_DESPAWN") ?? "5000";
 const movement_speed: string = Deno.env.get("PLAYER_SPEED") ?? "5";
 const game_title: string = Deno.env.get("GAME_TITLE") ?? "Multiplayer Test";
+const title_font_size: string = Deno.env.get("TITLE_SIZE") ?? "150";
 
 const p3_respawn: string = (Deno.env.get("RESPAWN_TIME") ?? "3000");
 const p2_respawn: string =
@@ -42,7 +43,8 @@ const index_html = await decoder.decode(
   .replace("%MOVE_SPEED%", movement_speed)
   .replace("%GAME_TITLE%", game_title)
   .replace("%P2_RESPAWN%", p2_respawn)
-  .replace("%P3_RESPAWN%", p3_respawn);
+  .replace("%P3_RESPAWN%", p3_respawn)
+  .replace("%TITLE_SIZE%", title_font_size);
 
 console.log(socket_url);
 console.log(`http://localhost:${PORT}`);
