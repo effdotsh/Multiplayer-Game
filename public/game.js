@@ -169,7 +169,7 @@ function namescreen() {
   image(name_box, 100, -162 + name_x_offset, 200, 75);
 
   text("Spectate", 100, 25);
-  if (mouse_down && 0 < mouseX && mouseX < 125 && mouseY < 40) {
+  if (mouse_down && 0 < mouseX && mouseX < 200 && mouseY < 75) {
     if (ws == undefined) {
       spectating = true;
 
