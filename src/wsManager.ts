@@ -277,117 +277,119 @@ const wsManager = async (ws: WebSocket) => {
     updatePlayers();
   }
   for await (const ev of ws) {
-    //@ts-ignore
-    let player: Player = sockets.get(uid).player;
+    try {
+      //@ts-ignore
+      let player: Player = sockets.get(uid).player;
 
-    if (isWebSocketCloseEvent(ev)) {
-      sockets.delete(uid);
-      updatePlayers();
-    } else if (
-      player != undefined &&
-      (player.living || (typeof ev == "string" && ev.includes("vel"))) &&
-      !ws.isClosed && !player.spectating
-    ) {
-      //delete socket if connection closed
-      if (typeof ev === "string") {
-        if (ev.slice(0, 5).includes("name")) {
-          if (ev.length <= 12) {
-            let wordList = await fetch(
-              "https://raw.githubusercontent.com/words/cuss/master/index.json",
-            );
-            player.name = ev.slice(4);
-          }
-        } else if (ev.includes("vel")) { //Handle player movement
-          updateVelocity(uid, ws, player, ev);
-        } else if (ev.includes("fire") && player.living) {
-          if (Date.now() - player.last_dash > dash_time) {
-            fire_bullet(uid, ws, player, ev);
-          }
-        } else if (ev.includes("wake")) {
-          if (!ws.isClosed) {
-            let dummy_mssg = new Signal();
-            dummy_mssg.type = "players";
-            dummy_mssg.info.push(mssg.players);
-            ws.send(JSON.stringify(dummy_mssg));
-            dummy_mssg.type = "bullets";
-            dummy_mssg.info.push(mssg.bullets);
-            ws.send(JSON.stringify(mssg));
-            updatePlayers();
-          } else {
-            sockets.delete(uid);
-          }
-        } else if (ev.includes("dash")) {
-          let dash_vel = ev.replace("dash", "pos");
-          if (Date.now() - player.last_dash >= dash_cooldown) {
-            player.dash_from_x = player.x;
-
-            player.dash_from_y = player.y;
-            player.last_dash = Date.now();
-
-            updatePositions(uid, ws, player, dash_distance);
-            player.updateTime = Date.now() + dash_time;
-
-            updatePlayers();
-          }
-        } else if (ev.includes("sync")) {
-          if (!ws.isClosed) {
-            let you_are: number = 0;
-            let player_counter: number = 0;
-            sockets.forEach((user, uuid) => {
-              if (uid == uuid) {
-                you_are = player_counter;
-              }
-              player_counter++;
-            });
-            let dummy_mssg = new Signal();
-            dummy_mssg.you_are = you_are;
-            dummy_mssg.type = "sync_player";
-            dummy_mssg.info.push(mssg.players);
-            ws.send(JSON.stringify(dummy_mssg));
-            dummy_mssg = new Signal();
-            dummy_mssg.type = "sync_bullet";
-            dummy_mssg.info.push(mssg.bullets);
-            ws.send(JSON.stringify(dummy_mssg));
-          } else {
-            sockets.delete(uid);
-          }
-        } else if (ev.includes("spectate")) {
-          player.spectating = true;
-          updatePlayers();
-        }
-
-        //move bullets and despawn old ones
-        let bullet_counter: number = 0;
-        for (const bullet of mssg.bullets) {
-          if (Date.now() - bullet.spawn_time > bullet_despawn) {
-            if (mssg.bullets.length > 1) {
-              mssg.bullets.splice(bullet_counter, bullet_counter);
-            } else {
-              mssg.bullets.pop();
+      if (isWebSocketCloseEvent(ev)) {
+        sockets.delete(uid);
+        updatePlayers();
+      } else if (
+        player != undefined &&
+        (player.living || (typeof ev == "string" && ev.includes("vel"))) &&
+        !ws.isClosed && !player.spectating
+      ) {
+        //delete socket if connection closed
+        if (typeof ev === "string") {
+          if (ev.slice(0, 5).includes("name")) {
+            if (ev.length <= 12) {
+              let wordList = await fetch(
+                "https://raw.githubusercontent.com/words/cuss/master/index.json",
+              );
+              player.name = ev.slice(4);
             }
-          } else {
-            bullet.x += bullet.angle[0] *
-              ((Date.now() - bullet.update_time) / 20);
-            bullet.y += bullet.angle[1] *
-              ((Date.now() - bullet.update_time) / 20);
-            bullet.update_time = Date.now();
-          }
-          bullet_counter += 1;
-        }
+          } else if (ev.includes("vel")) { //Handle player movement
+            updateVelocity(uid, ws, player, ev);
+          } else if (ev.includes("fire") && player.living) {
+            if (Date.now() - player.last_dash > dash_time) {
+              fire_bullet(uid, ws, player, ev);
+            }
+          } else if (ev.includes("wake")) {
+            if (!ws.isClosed) {
+              let dummy_mssg = new Signal();
+              dummy_mssg.type = "players";
+              dummy_mssg.info.push(mssg.players);
+              ws.send(JSON.stringify(dummy_mssg));
+              dummy_mssg.type = "bullets";
+              dummy_mssg.info.push(mssg.bullets);
+              ws.send(JSON.stringify(mssg));
+              updatePlayers();
+            } else {
+              sockets.delete(uid);
+            }
+          } else if (ev.includes("dash")) {
+            let dash_vel = ev.replace("dash", "pos");
+            if (Date.now() - player.last_dash >= dash_cooldown) {
+              player.dash_from_x = player.x;
 
-        //check collisions, despawn bullets
-        let collisions = check_collisions(sockets, mssg.bullets);
-        sockets = collisions.users;
-        mssg.bullets = collisions.bullets;
-        if (collisions.bullet_trash.length > 0) {
-          let despawn_mmsg: Signal = new Signal();
-          despawn_mmsg.type = "despawn";
-          despawn_mmsg.info = collisions.bullet_trash;
-          tellPlayers(despawn_mmsg);
+              player.dash_from_y = player.y;
+              player.last_dash = Date.now();
+
+              updatePositions(uid, ws, player, dash_distance);
+              player.updateTime = Date.now() + dash_time;
+
+              updatePlayers();
+            }
+          } else if (ev.includes("sync")) {
+            if (!ws.isClosed) {
+              let you_are: number = 0;
+              let player_counter: number = 0;
+              sockets.forEach((user, uuid) => {
+                if (uid == uuid) {
+                  you_are = player_counter;
+                }
+                player_counter++;
+              });
+              let dummy_mssg = new Signal();
+              dummy_mssg.you_are = you_are;
+              dummy_mssg.type = "sync_player";
+              dummy_mssg.info.push(mssg.players);
+              ws.send(JSON.stringify(dummy_mssg));
+              dummy_mssg = new Signal();
+              dummy_mssg.type = "sync_bullet";
+              dummy_mssg.info.push(mssg.bullets);
+              ws.send(JSON.stringify(dummy_mssg));
+            } else {
+              sockets.delete(uid);
+            }
+          } else if (ev.includes("spectate")) {
+            player.spectating = true;
+            updatePlayers();
+          }
+
+          //move bullets and despawn old ones
+          let bullet_counter: number = 0;
+          for (const bullet of mssg.bullets) {
+            if (Date.now() - bullet.spawn_time > bullet_despawn) {
+              if (mssg.bullets.length > 1) {
+                mssg.bullets.splice(bullet_counter, bullet_counter);
+              } else {
+                mssg.bullets.pop();
+              }
+            } else {
+              bullet.x += bullet.angle[0] *
+                ((Date.now() - bullet.update_time) / 20);
+              bullet.y += bullet.angle[1] *
+                ((Date.now() - bullet.update_time) / 20);
+              bullet.update_time = Date.now();
+            }
+            bullet_counter += 1;
+          }
+
+          //check collisions, despawn bullets
+          let collisions = check_collisions(sockets, mssg.bullets);
+          sockets = collisions.users;
+          mssg.bullets = collisions.bullets;
+          if (collisions.bullet_trash.length > 0) {
+            let despawn_mmsg: Signal = new Signal();
+            despawn_mmsg.type = "despawn";
+            despawn_mmsg.info = collisions.bullet_trash;
+            tellPlayers(despawn_mmsg);
+          }
         }
       }
-    }
-    game_background();
+      game_background();
+    } catch {}
   }
 };
 function game_background() {
