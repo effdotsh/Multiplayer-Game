@@ -66,6 +66,9 @@ const dash_distance: number = parseInt(Deno.env.get("DASH_DISTANCE") ?? "50");
 const dash_time: number = parseInt(Deno.env.get("DASH_TIME") ?? "150");
 const movement_speed: number = parseInt(Deno.env.get("PLAYER_SPEED") ?? "5");
 const bullet_speed: number = parseInt(Deno.env.get("BULLET_SPEED") ?? "15");
+
+const health_regen: number = parseInt(Deno.env.get("HEALTH_REGEN") ?? "0");
+
 const bullet_despawn: number = parseInt(
   Deno.env.get("BULLET_DESPAWN") ?? "5000",
 );
@@ -132,6 +135,11 @@ function updatePositions(
   let velocity = [player.vel_x, player.vel_y];
   //move player
   let time_multiplier = (Date.now() - player.updateTime) / 20;
+
+  //regen health
+  player.health += (Date.now() - player.updateTime) / 1000 * health_regen;
+  player.health = Math.min(player.health, 100);
+
   player.updateTime = Date.now();
   //dash
   player.x += dash * velocity[0];

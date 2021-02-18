@@ -427,6 +427,9 @@ function move_player(p) {
   let new_update = Date.now();
   let time_multiplier = (new_update - moving_players.get(p.id).client_update) /
     20;
+  p.health += (Date.now() - moving_players.get(p.id).client_update) / 1000 *
+    health_regen;
+  p.health = Math.min(p.health, 100);
 
   moving_players.get(p.id).client_update = new_update;
   p.x += p.vel_x * time_multiplier;
