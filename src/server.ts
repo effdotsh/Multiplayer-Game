@@ -26,6 +26,7 @@ const title_font_size: string = Deno.env.get("TITLE_SIZE") ?? "150";
 const p3_respawn: string = (Deno.env.get("RESPAWN_TIME") ?? "3000");
 const p2_respawn: string =
   (Deno.env.get("2P_RESPAWN_TIME") ?? (parseInt(p3_respawn) / 2).toString());
+const health_regen: string = (Deno.env.get("HEALTH_REGEN") ?? "0");
 
 const server = serve({ port: PORT });
 const socket_url = Deno.env.get("SOCKET_URL") || `ws://localhost:${PORT}/ws`;
@@ -44,7 +45,8 @@ const index_html = await decoder.decode(
   .replace("%GAME_TITLE%", game_title)
   .replace("%P2_RESPAWN%", p2_respawn)
   .replace("%P3_RESPAWN%", p3_respawn)
-  .replace("%TITLE_SIZE%", title_font_size);
+  .replace("%TITLE_SIZE%", title_font_size)
+  .replace("%HEALTH_REGEN%", health_regen);
 
 console.log(socket_url);
 console.log(`http://localhost:${PORT}`);
