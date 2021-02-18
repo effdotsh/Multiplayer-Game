@@ -395,8 +395,9 @@ const wsManager = async (ws: WebSocket) => {
             tellPlayers(despawn_mmsg);
           }
         }
+
+        game_background();
       }
-      game_background();
     } catch {}
   }
 };
