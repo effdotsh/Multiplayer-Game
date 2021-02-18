@@ -8,7 +8,7 @@ import { Application } from "https://deno.land/x/abc@v1.2.4/mod.ts";
 const app = new Application();
 
 //custom file handle all websocket reqs
-import { game_background, wsManager } from "./wsManager.ts";
+import { game_background, get_game_info, wsManager } from "./wsManager.ts";
 
 import "https://deno.land/x/dotenv/load.ts";
 
@@ -67,6 +67,17 @@ for await (const req of server) {
         req.respond({
           status: 200,
           body: index_html,
+        });
+      } else if (req.url === "/info") {
+        let info = get_game_info();
+        let players: any[] = [];
+        info.forEach((user) => {
+          players.push(user.player);
+        });
+        req.respond({
+          status: 200,
+          // body: ,
+          body: JSON.stringify(players),
         });
       } else {
         let status: number;

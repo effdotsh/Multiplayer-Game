@@ -427,4 +427,8 @@ function updatePlayers() {
   small_mssg.type = "players";
   tellPlayers(small_mssg);
 }
-export { game_background, wsManager };
+
+function get_game_info() {
+  return sockets;
+}
+export { game_background, get_game_info, wsManager };
