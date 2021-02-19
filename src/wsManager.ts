@@ -106,33 +106,34 @@ function bindVector(x: number, y: number, magnitude: number = 1): number[] {
 
 function updateMssg() {
   let players: Player[] = [];
-  sockets.forEach((connection: { socket: WebSocket; player: Player }) => {
+  sockets.forEach((connection) => {
     players.push(connection.player);
   });
   return players;
 }
-function send_signal(ws: WebSocket, message: string) {
+async function send_signal(ws: WebSocket, message: string) {
   if (!ws.isClosed) {
     try {
-      ws.send(message);
+      await ws.send(message);
     } catch {
     }
   }
 }
 
-function tellPlayers(message: Signal) {
+async function tellPlayers(message: Signal) {
   let player_counter = 0;
-  sockets.forEach((user, uid) => {
+  // sockets.forEach((user, uid) => {
+  for (const [uid, user] of sockets.entries()) {
     let socket = user.socket;
     if (!socket.isClosed) {
       message.you_are = player_counter;
       player_counter += 1;
-      send_signal(socket, JSON.stringify(message));
+      await send_signal(socket, JSON.stringify(message));
     } else {
       sockets.delete(uid);
-      updatePlayers();
+      await updatePlayers();
     }
-  });
+  }
 }
 
 function updatePositions(
@@ -172,7 +173,7 @@ function updatePositions(
 
   sockets.set(uid, { socket: ws, player: player });
 }
-function updateVelocity(
+async function updateVelocity(
   uid: string,
   ws: WebSocket,
   player: Player,
@@ -191,7 +192,7 @@ function updateVelocity(
   player.vel_y = velocity[1];
   sockets.set(uid, { socket: ws, player: player });
 
-  updatePlayers();
+  await updatePlayers();
 }
 function fire_bullet(
   uid: string,
@@ -223,14 +224,15 @@ function fire_bullet(
   }
 }
 
-function check_collisions(
+async function check_collisions(
   users: Map<string, { socket: WebSocket; player: Player }>,
   bullets: Bullet[],
 ) {
   let hit_list: string[] = new Array();
   let bullet_trash: string[] = new Array();
-  bullets.forEach((bullet) => {
-    users.forEach((user, uid) => {
+
+  for (const bullet of bullets) {
+    for (const [uid, user] of users.entries()) {
       let player = user.player;
       if (
         bullet.fired_by != player.id && Math.abs(bullet.x - player.x) < 37.5 &&
@@ -257,11 +259,11 @@ function check_collisions(
               shooter.score++;
             }
           }
-          updatePlayers();
+          await updatePlayers();
         }
       }
-    });
-  });
+    }
+  }
   for (let b = 0; b < bullets.length; b++) {
     for (let d = 0; d < bullet_trash.length; d++) {
       if (bullets[b].id == bullet_trash[d]) {
@@ -288,7 +290,7 @@ const wsManager = async (ws: WebSocket) => {
   const uid = v4.generate();
   if (!sockets.has(uid)) {
     sockets.set(uid, { socket: ws, player: new Player() });
-    updatePlayers();
+    await updatePlayers();
   }
   for await (const ev of ws) {
     try {
@@ -297,7 +299,7 @@ const wsManager = async (ws: WebSocket) => {
 
       if (isWebSocketCloseEvent(ev)) {
         sockets.delete(uid);
-        updatePlayers();
+        await updatePlayers();
       } else if (
         player != undefined &&
         !ws.isClosed && !player.spectating
@@ -312,24 +314,24 @@ const wsManager = async (ws: WebSocket) => {
               player.name = ev.slice(4);
             }
           } else if (ev.includes("vel")) { //Handle player movement
-            updateVelocity(uid, ws, player, ev);
+            await updateVelocity(uid, ws, player, ev);
           } else if (ev.includes("fire") && player.living) {
             if (Date.now() - player.last_dash > dash_time) {
-              fire_bullet(uid, ws, player, ev);
+              await fire_bullet(uid, ws, player, ev);
             }
           } else if (ev.includes("wake")) {
             if (!ws.isClosed) {
               let dummy_mssg = new Signal();
               dummy_mssg.type = "players";
               dummy_mssg.info.push(mssg.players);
-              send_signal(ws, JSON.stringify(dummy_mssg));
+              await send_signal(ws, JSON.stringify(dummy_mssg));
               dummy_mssg.type = "bullets";
               dummy_mssg.info.push(mssg.bullets);
-              send_signal(ws, JSON.stringify(mssg));
-              updatePlayers();
+              await send_signal(ws, JSON.stringify(mssg));
+              await updatePlayers();
             } else {
               sockets.delete(uid);
-              updatePlayers();
+              await updatePlayers();
             }
           } else if (ev.includes("dash")) {
             let dash_vel = ev.replace("dash", "pos");
@@ -339,10 +341,10 @@ const wsManager = async (ws: WebSocket) => {
               player.dash_from_y = player.y;
               player.last_dash = Date.now();
 
-              updatePositions(uid, ws, player, dash_distance);
+              await updatePositions(uid, ws, player, dash_distance);
               player.updateTime = Date.now() + dash_time;
 
-              updatePlayers();
+              await updatePlayers();
             }
           } else if (ev.includes("sync")) {
             if (!ws.isClosed) {
@@ -358,18 +360,18 @@ const wsManager = async (ws: WebSocket) => {
               dummy_mssg.you_are = you_are;
               dummy_mssg.type = "sync_player";
               dummy_mssg.info.push(mssg.players);
-              send_signal(ws, JSON.stringify(dummy_mssg));
+              await send_signal(ws, JSON.stringify(dummy_mssg));
               dummy_mssg = new Signal();
               dummy_mssg.type = "sync_bullet";
               dummy_mssg.info.push(mssg.bullets);
-              send_signal(ws, JSON.stringify(dummy_mssg));
+              await send_signal(ws, JSON.stringify(dummy_mssg));
             } else {
               sockets.delete(uid);
-              updatePlayers();
+              await updatePlayers();
             }
           } else if (ev.includes("spectate")) {
             player.spectating = true;
-            updatePlayers();
+            await updatePlayers();
           }
 
           //move bullets and despawn old ones
@@ -392,29 +394,29 @@ const wsManager = async (ws: WebSocket) => {
           }
 
           //check collisions, despawn bullets
-          let collisions = check_collisions(sockets, mssg.bullets);
+          let collisions = await check_collisions(sockets, mssg.bullets);
           sockets = collisions.users;
           mssg.bullets = collisions.bullets;
           if (collisions.bullet_trash.length > 0) {
             let despawn_mmsg: Signal = new Signal();
             despawn_mmsg.type = "despawn";
             despawn_mmsg.info = collisions.bullet_trash;
-            tellPlayers(despawn_mmsg);
+            await tellPlayers(despawn_mmsg);
           }
         }
 
-        game_background();
+        await game_background();
       }
     } catch {
     }
   }
 };
-function game_background() {
+async function game_background() {
   let respawn = sockets.size <= 2 ? two_respawn : respawn_time;
 
-  sockets.forEach((user, uid) => {
+  for (const [uid, user] of sockets.entries()) {
     if (Date.now() - user.player.last_dash > dash_time) {
-      updatePositions(uid, user.socket, user.player);
+      await updatePositions(uid, user.socket, user.player);
     }
 
     //respawn dead players.
@@ -424,17 +426,17 @@ function game_background() {
       !user.player.spectating
     ) {
       user.player.living = true;
-      updatePlayers();
+      await updatePlayers();
     }
-  });
+  }
 }
-function updatePlayers() {
+async function updatePlayers() {
   //tell players about the movement
   mssg.players = updateMssg();
   let small_mssg = new Signal();
   small_mssg.info = mssg.players;
   small_mssg.type = "players";
-  tellPlayers(small_mssg);
+  await tellPlayers(small_mssg);
 }
 
 function get_game_info() {
