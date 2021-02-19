@@ -93,7 +93,7 @@ function bindVector(x: number, y: number, magnitude: number = 1): number[] {
   //scale x and y to values < 1
   if (x != 0 && y != 0) {
     let scaler: number = magnitude /
-      Math.sqrt(Math.pow(Math.abs(x), 2) + Math.pow(Math.abs(y), 2));
+      Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
     x *= scaler;
     y *= scaler;
   } else {
@@ -122,6 +122,7 @@ function tellPlayers(message: Signal) {
       socket.send(JSON.stringify(message));
     } else {
       sockets.delete(uid);
+      updatePlayers();
     }
   });
 }
@@ -231,12 +232,10 @@ function check_collisions(
         hit_list.push(uid);
         bullet_trash.push(bullet.id);
 
-        let hit = users.get(uid);
         if (
-          hit != undefined && Date.now() - hit.player.last_dash > dash_time
+          player != undefined && Date.now() - player.last_dash > dash_time
         ) {
-          let dmg = dealDamage(hit.player);
-          hit.player = dmg.player;
+          dealDamage(player);
           let shooter = new Player();
           users.forEach((player) => {
             if (player.player.id == bullet.fired_by) {
@@ -246,7 +245,7 @@ function check_collisions(
           // let shooter = users.get(bullet.fired_by)?.player;
           if (shooter != undefined) {
             shooter.score += 0.5;
-            if (dmg.killed) {
+            if (!player.living) {
               shooter.score++;
             }
           }
@@ -264,7 +263,7 @@ function check_collisions(
   }
   return { users: users, bullets: bullets, bullet_trash: bullet_trash };
 }
-function dealDamage(player: Player): { player: Player; killed: boolean } {
+function dealDamage(player: Player) {
   let killed = false;
   player.health -= bullet_dmg;
   if (player.health <= 0) {
@@ -276,7 +275,6 @@ function dealDamage(player: Player): { player: Player; killed: boolean } {
     player.living = false;
     player.death_time = Date.now();
   }
-  return { player: player, killed: killed };
 }
 const wsManager = async (ws: WebSocket) => {
   const uid = v4.generate();
@@ -294,11 +292,10 @@ const wsManager = async (ws: WebSocket) => {
         updatePlayers();
       } else if (
         player != undefined &&
-        (player.living || (typeof ev == "string" && ev.includes("vel"))) &&
         !ws.isClosed && !player.spectating
       ) {
         //delete socket if connection closed
-        if (typeof ev === "string") {
+        if (typeof ev === "string" && (player.living || ev.includes("vel"))) {
           if (ev.slice(0, 5).includes("name")) {
             if (ev.length <= 12) {
               let wordList = await fetch(
@@ -324,6 +321,7 @@ const wsManager = async (ws: WebSocket) => {
               updatePlayers();
             } else {
               sockets.delete(uid);
+              updatePlayers();
             }
           } else if (ev.includes("dash")) {
             let dash_vel = ev.replace("dash", "pos");
@@ -359,6 +357,7 @@ const wsManager = async (ws: WebSocket) => {
               ws.send(JSON.stringify(dummy_mssg));
             } else {
               sockets.delete(uid);
+              updatePlayers();
             }
           } else if (ev.includes("spectate")) {
             player.spectating = true;
@@ -398,7 +397,8 @@ const wsManager = async (ws: WebSocket) => {
 
         game_background();
       }
-    } catch {}
+    } catch {
+    }
   }
 };
 function game_background() {
