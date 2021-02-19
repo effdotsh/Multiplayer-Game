@@ -214,23 +214,21 @@ function get_keys() {
   }
   send_pos();
 
-  if (keyIsDown(16) || keyIsDown(32)) {
+  if (keyIsDown(32)) {
     dash();
   }
-}
 
-function mousePressed(event) {
-  if (mouseButton === "left") {
-    mouse_down = true;
-  } else if (mouseButton === "right") {
+  if (keyIsDown(81) || keyIsDown(16) || keyIsDown(69)) {
     player = players_list[this_player];
     dash(mouseX - player.x * size_scaler, mouseY - player.y * size_scaler);
   }
 }
+
+function mousePressed() {
+  mouse_down = true;
+}
 function mouseReleased() {
-  if (mouseButton === "left") {
-    mouse_down = false;
-  }
+  mouse_down = false;
 }
 
 function keyPressed() {
@@ -255,7 +253,7 @@ function dash(x = horizontal_vel, y = vertical_vel) {
     last_dash = Date.now();
     send_signal(`vel${x * 100},${y * 100}`);
     send_signal(`dash`);
-    send_signal(`vel${horizontal_vel},${vertical_vel}`);
+    send_signal(`vel${horizontal_vel * 100},${vertical_vel * 100}`);
   }
 }
 
