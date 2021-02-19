@@ -31,6 +31,8 @@ let default_name =
   default_names[Math.floor(Math.random() * default_names.length)];
 
 let spectating = false;
+let show_colors = false;
+
 function preload() {
   aviera_sans = loadFont("AveriaSansLibre-Regular.ttf");
   name_box = loadImage("name_box.png");
@@ -43,6 +45,7 @@ function setup() {
   textAlign(CENTER, CENTER);
   ellipseMode(CENTER);
   textSize(16);
+  stroke(0);
 
   //scale window
   size_scaler = get_scale();
@@ -244,6 +247,10 @@ function keyTyped() {
     if (name_chars.includes(key.toLowerCase()) && name.length <= 7) {
       name += key;
     }
+  } else {
+    if (keyCode === 80) {
+      show_colors = !show_colors;
+    }
   }
 }
 function dash(x = horizontal_vel, y = vertical_vel) {
@@ -266,21 +273,25 @@ function draw_dashing(player) {
   let moved_y = player.y - player.dash_from_y;
   let new_x = player.dash_from_x + (moved_x * percent_dashed);
   let new_y = player.dash_from_y + (moved_y * percent_dashed);
-
+  if (show_colors) {
+    fill(player.color);
+  }
+  strokeWeight(0);
   circle(new_x, new_y, 50, 50);
 
   rectMode(CORNER);
   fill(0, 200, 0);
   rect(new_x - 25, new_y - 40, player.health / 100 * 50, 10);
-  fill(255);
-  textAlign(CENTER, CENTER);
-
-  text(Math.floor(player.score), new_x, new_y - 3);
-  text(player.name, new_x, new_y + 40);
-
   if (player.id == players_list[this_player].id) {
     cooldown_bar(new_x, new_y);
   }
+
+  fill(255);
+  textAlign(CENTER, CENTER);
+
+  strokeWeight(3);
+  text(Math.floor(player.score), new_x, new_y - 3);
+  text(player.name, new_x, new_y + 40);
 }
 
 function easeInOutSine(x) {
@@ -296,6 +307,8 @@ function init_socket() {
     socket_ready = true;
     if (spectating) {
       ws.send("spectate");
+      show_colors = true;
+      name_selected = true;
     } else {
       send_signal("wake");
       send_signal(`vel0,0`);
@@ -339,6 +352,10 @@ function send_signal(signal) {
 }
 
 function draw_leaderboard(players) {
+  if (show_colors) {
+    stroke(255);
+    strokeWeight(.5);
+  }
   textAlign(LEFT);
   textSize(30);
   players.sort((a, b) =>
@@ -348,7 +365,11 @@ function draw_leaderboard(players) {
   players.forEach((player) => {
     if (!player.spectating) {
       rank++;
-      fill(255);
+      if (show_colors) {
+        fill(player.color);
+      } else {
+        fill(255);
+      }
       if (player.id === players_list[this_player].id) {
         fill(0, 162, 255);
       }
@@ -364,6 +385,8 @@ function draw_leaderboard(players) {
       );
     }
   });
+  stroke(0);
+  strokeWeight(0);
 }
 
 function send_pos() {
@@ -398,17 +421,23 @@ function draw_player(p) {
   ) {
     move_player(p);
 
+    if (show_colors) {
+      fill(p.color);
+    }
+    strokeWeight(0);
     circle(p.x, p.y, 50, 50);
-    fill(255);
-    textAlign(CENTER, CENTER);
-    text(Math.floor(p.score), p.x, p.y - 3);
-    text(p.name, p.x, p.y + 40);
-    rectMode(CORNER);
     fill(0, 200, 0);
     rect(p.x - 25, p.y - 40, p.health / 100 * 50, 10);
     if (p.id == players_list[this_player].id) {
       cooldown_bar(p.x, p.y);
     }
+
+    fill(255);
+    strokeWeight(3);
+    textAlign(CENTER, CENTER);
+    text(Math.floor(p.score), p.x, p.y - 3);
+    text(p.name, p.x, p.y + 40);
+    rectMode(CORNER);
   } else {
     if (last_recorded_dash != p.last_dash) {
       dashing_players.set(
