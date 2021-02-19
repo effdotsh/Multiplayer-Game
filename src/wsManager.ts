@@ -111,6 +111,14 @@ function updateMssg() {
   });
   return players;
 }
+function send_signal(ws: WebSocket, message: string) {
+  if (!ws.isClosed) {
+    try {
+      ws.send(message);
+    } catch {
+    }
+  }
+}
 
 function tellPlayers(message: Signal) {
   let player_counter = 0;
@@ -119,7 +127,7 @@ function tellPlayers(message: Signal) {
     if (!socket.isClosed) {
       message.you_are = player_counter;
       player_counter += 1;
-      socket.send(JSON.stringify(message));
+      send_signal(socket, JSON.stringify(message));
     } else {
       sockets.delete(uid);
       updatePlayers();
@@ -314,10 +322,10 @@ const wsManager = async (ws: WebSocket) => {
               let dummy_mssg = new Signal();
               dummy_mssg.type = "players";
               dummy_mssg.info.push(mssg.players);
-              ws.send(JSON.stringify(dummy_mssg));
+              send_signal(ws, JSON.stringify(dummy_mssg));
               dummy_mssg.type = "bullets";
               dummy_mssg.info.push(mssg.bullets);
-              ws.send(JSON.stringify(mssg));
+              send_signal(ws, JSON.stringify(mssg));
               updatePlayers();
             } else {
               sockets.delete(uid);
@@ -350,11 +358,11 @@ const wsManager = async (ws: WebSocket) => {
               dummy_mssg.you_are = you_are;
               dummy_mssg.type = "sync_player";
               dummy_mssg.info.push(mssg.players);
-              ws.send(JSON.stringify(dummy_mssg));
+              send_signal(ws, JSON.stringify(dummy_mssg));
               dummy_mssg = new Signal();
               dummy_mssg.type = "sync_bullet";
               dummy_mssg.info.push(mssg.bullets);
-              ws.send(JSON.stringify(dummy_mssg));
+              send_signal(ws, JSON.stringify(dummy_mssg));
             } else {
               sockets.delete(uid);
               updatePlayers();

@@ -60,7 +60,11 @@ for await (const req of server) {
           bufReader: req.r,
           bufWriter: req.w,
           headers: req.headers,
-        }).then(wsManager);
+        }).then(wsManager)
+          .catch(async (err) => {
+            console.error(`failed to accept websocket: ${err}`);
+            await req.respond({ status: 400 });
+          });
       }
     } else if (!req.url.includes("..")) { //send all non-websocket requests to the public folder
       if (req.url === "/" || req.url === "/index") {
