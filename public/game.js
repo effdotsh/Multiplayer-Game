@@ -219,11 +219,18 @@ function get_keys() {
   }
 }
 
-function mousePressed() {
-  mouse_down = true;
+function mousePressed(event) {
+  if (mouseButton === "left") {
+    mouse_down = true;
+  } else if (mouseButton === "right") {
+    player = players_list[this_player];
+    dash(mouseX - player.x * size_scaler, mouseY - player.y * size_scaler);
+  }
 }
 function mouseReleased() {
-  mouse_down = false;
+  if (mouseButton === "left") {
+    mouse_down = false;
+  }
 }
 
 function keyPressed() {
@@ -241,13 +248,14 @@ function keyTyped() {
     }
   }
 }
-function dash() {
+function dash(x = horizontal_vel, y = vertical_vel) {
   let cooldown = (Date.now() - last_dash) / dash_cooldown;
   cooldown = cooldown > 1 ? cooldown = 1 : cooldown = cooldown;
-  if (cooldown == 1 && (horizontal_vel != 0 || vertical_vel != 0)) {
+  if (cooldown == 1 && (x != 0 || y != 0)) {
     last_dash = Date.now();
-
-    send_signal(`dash${horizontal_vel * 100},${vertical_vel * 100}`);
+    send_signal(`vel${x * 100},${y * 100}`);
+    send_signal(`dash`);
+    send_signal(`vel${horizontal_vel},${vertical_vel}`);
   }
 }
 
@@ -323,7 +331,6 @@ function init_socket() {
     const { you_are } = JSON.parse(data);
 
     this_player = you_are;
-    console.log(this_player);
   });
 }
 

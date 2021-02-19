@@ -32,6 +32,7 @@
         var name_selected = false;
         var socket_ready = false;
 
+        document.oncontextmenu = function () { return false; }
         $(document).on("keydown", function (e) {
             if (e.which === 8) {
                 e.preventDefault();
