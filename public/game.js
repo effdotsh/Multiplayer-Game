@@ -33,7 +33,10 @@ let default_name =
 let spectating = false;
 let show_colors = false;
 
+let music = true;
+
 function preload() {
+  song = loadSound('theme.mp3');
   aviera_sans = loadFont("AveriaSansLibre-Regular.ttf");
   name_box = loadImage("name_box.png");
 }
@@ -41,6 +44,8 @@ function get_scale() {
   return min(windowWidth / canvasX, windowHeight / canvasY);
 }
 function setup() {
+  song.loop()
+  song.play();
   fill(255);
   textAlign(CENTER, CENTER);
   ellipseMode(CENTER);
@@ -70,7 +75,8 @@ function draw() {
   scale(size_scaler);
 
   if (socket_ready && name_selected) {
-    background(0);
+    background(0)
+    imageMode(CORNER);
 
     show_players();
 
@@ -215,6 +221,7 @@ function get_keys() {
   if (keyIsDown(68)) { // D
     horizontal_vel += 1;
   }
+
   send_pos();
 
   if (keyIsDown(32)) {
@@ -238,6 +245,13 @@ function keyPressed() {
   if (keyCode === 13) {
     if (ws == undefined) {
       init_socket();
+    }
+  }else if (keyCode== 77 && !name_selected){
+    music = !music;
+    if (music){
+      song.play();
+    }else{
+      song.stop()
     }
   }
 }
@@ -473,3 +487,7 @@ function move_player(p) {
 
   p.y = p.y > canvasY ? p.y = canvasY : p.y < 0 ? p.y = 0 : p.y = p.y;
 }
+
+var bob;
+let jim = 0;
+bob = jim >= 0 ? true : false;
