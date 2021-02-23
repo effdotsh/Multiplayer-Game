@@ -33,7 +33,7 @@ let default_name =
 let spectating = false;
 let show_colors = false;
 
-let music = true;
+let music = false;
 
 function preload() {
   song = loadSound('theme.mp3');
@@ -46,6 +46,12 @@ function get_scale() {
 function setup() {
   song.loop()
   song.play();
+  if (music){
+    song.play();
+  }else{
+    song.stop()
+  }
+
   fill(255);
   textAlign(CENTER, CENTER);
   ellipseMode(CENTER);
@@ -246,7 +252,7 @@ function keyPressed() {
     if (ws == undefined) {
       init_socket();
     }
-  }else if (keyCode== 77 && !name_selected){
+  }else if (keyCode== 77 && name_selected){
     music = !music;
     if (music){
       song.play();
