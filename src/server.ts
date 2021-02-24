@@ -33,7 +33,7 @@ const socket_url = Deno.env.get("SOCKET_URL") || `ws://localhost:${PORT}/ws`;
 
 const decoder = new TextDecoder("utf-8");
 
-const index_html = await decoder.decode(
+const index_html = decoder.decode(
   await Deno.readFile("./public/index.html"),
 )
   .replace("%SOCKET_URL%", socket_url)

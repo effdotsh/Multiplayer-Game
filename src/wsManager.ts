@@ -20,8 +20,8 @@ class Player {
   failed_pings: number = 0;
   last_fired: number = Date.now();
   updateTime: number = Date.now();
-  health = 100;
-  score = 0;
+  health: number = 100;
+  score: number = 0;
   living: boolean = true;
 
   last_dash: number = 0;
@@ -34,6 +34,8 @@ class Player {
 
   color: string = "#" +
     ("000000" + Math.floor(Math.random() * 16777215).toString(16)).slice(-6);
+
+  timeout_update: number = Date.now();
 }
 
 class Bullet {
@@ -71,6 +73,8 @@ const movement_speed: number = parseInt(Deno.env.get("PLAYER_SPEED") ?? "5");
 const bullet_speed: number = parseInt(Deno.env.get("BULLET_SPEED") ?? "15");
 
 const health_regen: number = parseInt(Deno.env.get("HEALTH_REGEN") ?? "0");
+
+const timeout: number = parseInt(Deno.env.get("TIMEOUT") ?? "60000");
 
 const bullet_despawn: number = parseInt(
   Deno.env.get("BULLET_DESPAWN") ?? "5000",
@@ -297,6 +301,7 @@ const wsManager = async (ws: WebSocket) => {
   }
   for await (const ev of ws) {
     try {
+      let active_action = false; //1 = idle, 2 = active
       //@ts-ignore
       let player: Player = sockets.get(uid).player;
 
@@ -317,8 +322,10 @@ const wsManager = async (ws: WebSocket) => {
               player.name = ev.slice(4);
             }
           } else if (ev.includes("vel")) { //Handle player movement
+            active_action = true;
             await updateVelocity(uid, ws, player, ev);
           } else if (ev.includes("fire") && player.living) {
+            active_action = true;
             if (Date.now() - player.last_dash > dash_time) {
               await fire_bullet(uid, ws, player, ev);
             }
@@ -337,7 +344,7 @@ const wsManager = async (ws: WebSocket) => {
               await updatePlayers();
             }
           } else if (ev.includes("dash")) {
-            let dash_vel = ev.replace("dash", "pos");
+            active_action = true;
             if (Date.now() - player.last_dash >= dash_cooldown) {
               player.dash_from_x = player.x;
 
@@ -406,6 +413,11 @@ const wsManager = async (ws: WebSocket) => {
             despawn_mmsg.info = collisions.bullet_trash;
             await tellPlayers(despawn_mmsg);
           }
+
+          //update playyer timeouts
+          if (active_action) {
+            player.timeout_update = Date.now();
+          }
         }
 
         await game_background();
@@ -421,14 +433,21 @@ async function game_background() {
     if (Date.now() - user.player.last_dash > dash_time) {
       await updatePositions(uid, user.socket, user.player);
     }
+    let player = user.player;
 
     //respawn dead players.
     if (
-      Date.now() - user.player.death_time >= respawn - 100 &&
-      Date.now() - user.player.death_time <= respawn + 100 &&
-      !user.player.spectating
+      Date.now() - player.death_time >= respawn - 100 &&
+      Date.now() - player.death_time <= respawn + 100 &&
+      !player.spectating
     ) {
-      user.player.living = true;
+      player.living = true;
+      await updatePlayers();
+    }
+
+    //kick disconnected/ inactive players
+    if (Date.now() - player.timeout_update >= timeout) {
+      player.spectating = true;
       await updatePlayers();
     }
   }

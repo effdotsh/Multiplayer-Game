@@ -36,7 +36,7 @@ let show_colors = false;
 let music = false;
 
 function preload() {
-  song = loadSound('theme.mp3');
+  song = loadSound("theme.mp3");
   aviera_sans = loadFont("AveriaSansLibre-Regular.ttf");
   name_box = loadImage("name_box.png");
 }
@@ -44,12 +44,12 @@ function get_scale() {
   return min(windowWidth / canvasX, windowHeight / canvasY);
 }
 function setup() {
-  song.loop()
+  song.loop();
   song.play();
-  if (music){
+  if (music) {
     song.play();
-  }else{
-    song.stop()
+  } else {
+    song.stop();
   }
 
   fill(255);
@@ -81,7 +81,7 @@ function draw() {
   scale(size_scaler);
 
   if (socket_ready && name_selected) {
-    background(0)
+    background(0);
     imageMode(CORNER);
 
     show_players();
@@ -252,12 +252,12 @@ function keyPressed() {
     if (ws == undefined) {
       init_socket();
     }
-  }else if (keyCode== 77 && name_selected){
+  } else if (keyCode == 77 && name_selected) {
     music = !music;
-    if (music){
+    if (music) {
       song.play();
-    }else{
-      song.stop()
+    } else {
+      song.stop();
     }
   }
 }
@@ -339,9 +339,20 @@ function init_socket() {
     const { type } = parsed;
     const { info } = parsed;
     const all = false;
+
+    const { you_are } = JSON.parse(data);
+
+    this_player = you_are;
+
     if (type === "players" || all) {
       let players = info;
       players_list = players;
+      if (players_list[this_player].spectating && !spectating) {
+        spectating = true;
+        alert(
+          "You were kicked due to inactivity. Reload if you want to rejoin, or press 'OK' to spectate!",
+        );
+      }
     }
     if (type === "bullets" || all) {
       const bullets = info;
@@ -359,9 +370,6 @@ function init_socket() {
         }
       }
     }
-    const { you_are } = JSON.parse(data);
-
-    this_player = you_are;
   });
 }
 
