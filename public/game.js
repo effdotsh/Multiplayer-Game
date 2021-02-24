@@ -103,7 +103,9 @@ function draw() {
   }
 }
 function respawn_timer() {
-  if (!players_list[this_player].living) {
+  if (
+    !players_list[this_player].living && !players_list[this_player].spectating
+  ) {
     let respawn_time = players_list.length <= 2 ? p2_respawn : p3_respawn;
     death_time = death_time == 0 ? Date.now() : death_time;
     let shade = 100;
