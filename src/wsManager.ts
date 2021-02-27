@@ -138,7 +138,7 @@ async function tellPlayers(message: Signal) {
       await send_signal(socket, JSON.stringify(message));
     } else {
       sockets.delete(uid);
-      await updatePlayers();
+      updatePlayers();
     }
   }
 }
@@ -199,7 +199,7 @@ async function updateVelocity(
   player.vel_y = velocity[1];
   sockets.set(uid, { socket: ws, player: player });
 
-  await updatePlayers();
+  updatePlayers();
 }
 function fire_bullet(
   uid: string,
@@ -266,7 +266,7 @@ async function check_collisions(
               shooter.score++;
             }
           }
-          await updatePlayers();
+          updatePlayers();
         }
       }
     }
@@ -297,7 +297,7 @@ const wsManager = async (ws: WebSocket) => {
   const uid = v4.generate();
   if (!sockets.has(uid)) {
     sockets.set(uid, { socket: ws, player: new Player() });
-    await updatePlayers();
+    updatePlayers();
   }
   for await (const ev of ws) {
     try {
@@ -307,7 +307,7 @@ const wsManager = async (ws: WebSocket) => {
 
       if (isWebSocketCloseEvent(ev)) {
         sockets.delete(uid);
-        await updatePlayers();
+        updatePlayers();
       } else if (
         player != undefined &&
         !ws.isClosed && !player.spectating
@@ -316,9 +316,6 @@ const wsManager = async (ws: WebSocket) => {
         if (typeof ev === "string" && (player.living || ev.includes("vel"))) {
           if (ev.slice(0, 5).includes("name")) {
             if (ev.length <= 12) {
-              let wordList = await fetch(
-                "https://raw.githubusercontent.com/words/cuss/master/index.json",
-              );
               player.name = ev.slice(4);
             }
           } else if (ev.includes("vel")) { //Handle player movement
@@ -334,14 +331,14 @@ const wsManager = async (ws: WebSocket) => {
               let dummy_mssg = new Signal();
               dummy_mssg.type = "players";
               dummy_mssg.info.push(mssg.players);
-              await send_signal(ws, JSON.stringify(dummy_mssg));
+              send_signal(ws, JSON.stringify(dummy_mssg));
               dummy_mssg.type = "bullets";
               dummy_mssg.info.push(mssg.bullets);
-              await send_signal(ws, JSON.stringify(mssg));
-              await updatePlayers();
+              send_signal(ws, JSON.stringify(mssg));
+              updatePlayers();
             } else {
               sockets.delete(uid);
-              await updatePlayers();
+              updatePlayers();
             }
           } else if (ev.includes("dash")) {
             active_action = true;
@@ -354,7 +351,7 @@ const wsManager = async (ws: WebSocket) => {
               await updatePositions(uid, ws, player, dash_distance);
               player.updateTime = Date.now() + dash_time;
 
-              await updatePlayers();
+              updatePlayers();
             }
           } else if (ev.includes("sync")) {
             if (!ws.isClosed) {
@@ -370,18 +367,18 @@ const wsManager = async (ws: WebSocket) => {
               dummy_mssg.you_are = you_are;
               dummy_mssg.type = "sync_player";
               dummy_mssg.info.push(mssg.players);
-              await send_signal(ws, JSON.stringify(dummy_mssg));
+              send_signal(ws, JSON.stringify(dummy_mssg));
               dummy_mssg = new Signal();
               dummy_mssg.type = "sync_bullet";
               dummy_mssg.info.push(mssg.bullets);
-              await send_signal(ws, JSON.stringify(dummy_mssg));
+              send_signal(ws, JSON.stringify(dummy_mssg));
             } else {
               sockets.delete(uid);
-              await updatePlayers();
+              updatePlayers();
             }
           } else if (ev.includes("spectate")) {
             player.spectating = true;
-            await updatePlayers();
+            updatePlayers();
           }
 
           //move bullets and despawn old ones
@@ -431,7 +428,7 @@ async function game_background() {
 
   for (const [uid, user] of sockets.entries()) {
     if (Date.now() - user.player.last_dash > dash_time) {
-      await updatePositions(uid, user.socket, user.player);
+      updatePositions(uid, user.socket, user.player);
     }
     let player = user.player;
 
@@ -442,13 +439,13 @@ async function game_background() {
       !player.spectating
     ) {
       player.living = true;
-      await updatePlayers();
+      updatePlayers();
     }
 
     //kick disconnected/ inactive players
     if (Date.now() - player.timeout_update >= timeout) {
       player.spectating = true;
-      await updatePlayers();
+      updatePlayers();
     }
   }
 }
