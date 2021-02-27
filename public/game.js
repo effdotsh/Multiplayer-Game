@@ -148,6 +148,9 @@ function show_players() {
     fill(200, 0, 0);
     if (player_counter == this_player) {
       fill(41, 167, 240);
+      if (p.spectating) {
+        show_colors = true;
+      }
     }
     player_counter++;
     if (p.living && !p.spectating) {
