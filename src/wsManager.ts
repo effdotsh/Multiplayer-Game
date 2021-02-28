@@ -412,7 +412,7 @@ const wsManager = async (ws: WebSocket) => {
           }
 
           //update playyer timeouts
-          if (active_action) {
+          if (active_action || player.vel_x != 0 || player.vel_y != 0) {
             player.timeout_update = Date.now();
           }
         }
