@@ -3,7 +3,7 @@
   "description": "A Multiplayer Top Down 2-Dimensional Movement Shooter made with Deno, p5js, and Websockets",
   "repository": "https://github.com/AI-Spawn/deno-websocket-test",
   "logo": "https://avatars.githubusercontent.com/u/50590465?s=460&u=630cf0aa63868d401b0488fe33538f1d6b5094cc&v=4",
-  "keywords": ["deno", "p5js", "websockets"]
+  "keywords": ["deno", "p5js", "websockets"],
   "buildpacks": [
     {
       "url": "https://github.com/chibat/heroku-buildpack-deno"
