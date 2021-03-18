@@ -8,5 +8,11 @@
     {
       "url": "https://github.com/chibat/heroku-buildpack-deno"
     }
-  ]
+  ],
+  "env": {  
+    "SOCKET_URL": {
+      "description": "The url to the websocket server",
+      "value": "wss://APP_NAME.herokuapp.com/ws"
+    }
+  }
 }
