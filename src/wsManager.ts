@@ -317,6 +317,7 @@ const wsManager = async (ws: WebSocket) => {
           if (ev.slice(0, 5).includes("name")) {
             if (ev.length <= 12) {
               player.name = ev.slice(4);
+              updatePlayers();
             }
           } else if (ev.includes("vel")) { //Handle player movement
             active_action = true;
