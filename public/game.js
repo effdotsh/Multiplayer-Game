@@ -33,10 +33,7 @@ let default_name =
 let spectating = false;
 let show_colors = false;
 
-let music = false;
-
 function preload() {
-  song = loadSound("theme.mp3");
   aviera_sans = loadFont("AveriaSansLibre-Regular.ttf");
   name_box = loadImage("name_box.png");
 }
@@ -44,13 +41,7 @@ function get_scale() {
   return min(windowWidth / canvasX, windowHeight / canvasY);
 }
 function setup() {
-  song.loop();
-  song.play();
-  if (music) {
-    song.play();
-  } else {
-    song.stop();
-  }
+  frameRate(60);
 
   fill(255);
   textAlign(CENTER, CENTER);
@@ -257,14 +248,7 @@ function keyPressed() {
     if (ws == undefined) {
       init_socket();
     }
-  } else if (keyCode == 77 && name_selected) {
-    music = !music;
-    if (music) {
-      song.play();
-    } else {
-      song.stop();
-    }
-  }
+  } 
 }
 function keyTyped() {
   if (!name_selected) {
